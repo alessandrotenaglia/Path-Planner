@@ -15,6 +15,8 @@
 /*---------------------------------------------------------------------------*/
 namespace nav {
 
+#define INF std::numeric_limits<float>::max();
+
 // Initialize a map
 Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
          float radius, float height, std::list<Point> fix_pntcloud)
@@ -111,7 +113,7 @@ void Map::add_slam_pntcloud(std::list<Point> slam_pntcloud) {
     if (ind < this->n_ && this->updatable_[ind]) {
       this->boxes_[ind].add_slam_pnt(pnt);
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
-        this->to_update_[ind_neigh] = true;
+        this->to_update_[ind_neigh] = this->updatable_[ind_neigh];
       }
     }
   }
@@ -130,6 +132,16 @@ void Map::set_slam_obstacles() {
           if (count > 0) {
             this->boxes_[ind].set_free(false);
             this->updated_[ind] = true;
+            for (WtEdge edge_from : this->boxes(ind).edges()) {
+              edge_from.second = INF;
+              for (WtEdge edge_to : this->boxes(edge_from.first).edges()) {
+                if (edge_to.first == ind) {
+                  edge_to.second = INF;
+                  this->updated_[edge_from.first] = true;
+                  break;
+                }
+              }
+            }
             break;
           }
         }
@@ -144,8 +156,6 @@ void Map::set_slam_obstacles() {
 void Map::slam_update(std::list<Point> slam_pntcloud) {
   for (size_t ind = 0; ind < this->n_; ind++) {
     this->boxes_[ind].remove_slam_pnts();
-    if (this->boxes_[ind].slam_pnts().size())
-      std::cout << "SGODO" << std::endl;
     this->to_update_[ind] = false;
     this->updated_[ind] = false;
   }

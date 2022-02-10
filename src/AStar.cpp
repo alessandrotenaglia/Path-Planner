@@ -72,6 +72,8 @@ void AStar::initialize() {
 }
 
 void AStar::compute_shortest_path() {
+  // Initialize algorithm
+  this->initialize();
   // start search
   ASVx *curr, *neigh;
   float g_score;
@@ -85,8 +87,7 @@ void AStar::compute_shortest_path() {
     if (curr->ind() == this->trg_->ind())
       return;
     // Loop on box edges
-    for (std::pair<size_t, float> edge :
-         this->map_.boxes(curr->ind()).edges()) {
+    for (WtEdge edge : this->map_.boxes(curr->ind()).edges()) {
       // Neighbor
       neigh = &this->vxs_[edge.first];
       // Target box reached

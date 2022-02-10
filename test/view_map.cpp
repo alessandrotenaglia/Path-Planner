@@ -125,17 +125,16 @@ int main() {
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
     }
-
-
-      // Links
-      for (const nav::Box &src : map.boxes()) {
-        for (std::pair<size_t, float> edge : src.edges()) {
-          nav::Box dest = map.boxes(edge.first);
-          gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
-                        dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
-        }
+    /*
+    // Links
+    for (const nav::Box &src : map.boxes()) {
+      for (std::pair<size_t, float> edge : src.edges()) {
+        nav::Box dest = map.boxes(edge.first);
+        gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
+                      dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }
-
+    }
+    */
     // Swap frames and Process Events
     pangolin::FinishFrame();
   }

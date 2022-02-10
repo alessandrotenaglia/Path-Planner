@@ -25,16 +25,18 @@
 /*---------------------------------------------------------------------------*/
 namespace nav {
 
+typedef std::pair<size_t, float> WtEdge;
+
 class Box {
 private:
-  size_t ind_;                                  // Linear index
-  Point cnt_;                                   // Center
-  bool in_;                                     // Flag inside/outside map
-  bool free_;                                   // Flag free/busy
-  std::list<Point> fix_pnts_;                   // Fixed points
-  std::list<Point> slam_pnts_;                  // SLAM points
-  std::vector<size_t> neighs_;                  // Neighbors
-  std::vector<std::pair<size_t, float>> edges_; // Edges with neighbors
+  size_t ind_;                 // Linear index
+  Point cnt_;                  // Center
+  bool in_;                    // Flag inside/outside map
+  bool free_;                  // Flag free/busy
+  std::list<Point> fix_pnts_;  // Fixed points
+  std::list<Point> slam_pnts_; // SLAM points
+  std::vector<size_t> neighs_; // Neighbors
+  std::vector<WtEdge> edges_;  // Edges with neighbors
 
   // Box serialization
   friend class boost::serialization::access;
@@ -87,7 +89,7 @@ public:
   // Add an edge
   void add_edge(size_t dest, float wt);
   // Get edges with neighbors
-  const std::vector<std::pair<size_t, float>> &edges() const { return edges_; }
+  const std::vector<WtEdge> &edges() const { return edges_; }
 
   // Convert a box in string form
   friend std::ostream &operator<<(std::ostream &os, const Box &box);

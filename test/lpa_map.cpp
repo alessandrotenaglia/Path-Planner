@@ -88,17 +88,7 @@ int main() {
   size_t curr_ind = lpa.str()->ind();
   std::list<const nav::Box *> path_from;
   path_from.push_back(&lpa.map().boxes(curr_ind));
-
-  lpa.update_map(slam_pntcloud);
-
   std::list<nav::Box *> *path_to;
-  try {
-    lpa.compute_shortest_path();
-    path_to = lpa.path(curr_ind);
-  } catch (const char *err_msg) {
-    std::cerr << err_msg << std::endl;
-    exit(EXIT_FAILURE);
-  }
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -123,6 +113,7 @@ int main() {
           .SetHandler(&handler);
 
   size_t cnt = 0;
+  size_t fps = 50;
 
   while (!pangolin::ShouldQuit()) {
     // Clear screen and activate view to render into
@@ -130,15 +121,13 @@ int main() {
     d_cam.Activate(s_cam);
     glClearColor(1.0f, 1.0f, 1.0f, 0.2f);
 
-    /*
-      // Compute shortest path
-      if (cnt == 0) {
-        if (curr_ind != lpa.trg()->ind()) {
-          lpa.compute_shortest_path();
-          path_to = lpa.path(curr_ind);
-        }
+    // Compute shortest path
+    if ((cnt % fps) == 0) {
+      if (curr_ind != lpa.trg()->ind()) {
+        lpa.compute_shortest_path();
+        path_to = lpa.path(curr_ind);
       }
-    */
+    }
 
     // Origin
     gl::draw_axes();
@@ -187,16 +176,15 @@ int main() {
                    map_ystep, map_zstep);
     }
 
-    /*
-      if (cnt == 0) {
-        if (curr_ind != lpa.trg()->ind()) {
-          curr_ind = path_to->front()->ind();
-          path_from.push_back(&lpa.map().boxes(curr_ind));
-          lpa.update_map(slam_pntcloud);
-        }
+    if ((cnt % fps) == 0) {
+      if (curr_ind != lpa.trg()->ind()) {
+        curr_ind = path_to->front()->ind();
+        path_from.push_back(&lpa.map().boxes(curr_ind));
+        lpa.update_map(slam_pntcloud);
       }
-    */
-    cnt = (cnt + 1) % 10;
+    }
+
+    cnt++;
 
     // Swap frames and Process Events
     pangolin::FinishFrame();

@@ -71,22 +71,29 @@ void LPA::initialize() {
 }
 
 void LPA::update_vx(LPAVx *vx) {
-  if (!this->map_.boxes(vx->ind()).free())
-    return;
   if (vx->ind() != this->str_->ind()) {
     // Check if vertex is in the open set
     if (this->open_.find(vx) != this->open_.end())
       this->open_.erase(vx);
     //
-    float min_rhs = INF;
-    for (std::pair<size_t, float> edge : this->map_.boxes(vx->ind()).edges()) {
-      min_rhs = std::min(min_rhs, this->vxs_[edge.first].g() + edge.second);
-    }
-    vx->set_rhs(min_rhs);
-    //
-    if (vx->g() != vx->rhs()) {
-      vx->calculate_key();
-      this->open_.insert(vx);
+    if (!this->map_.boxes(vx->ind()).free()) {
+      vx->set_g(INF);
+      vx->set_h(INF);
+      vx->set_rhs(INF);
+    } else {
+      //
+      float min_rhs = INF;
+      for (WtEdge edge : this->map_.boxes(vx->ind()).edges()) {
+        if (!this->map_.boxes(edge.first).free()) {
+        }
+        min_rhs = std::min(min_rhs, this->vxs_[edge.first].g() + edge.second);
+      }
+      vx->set_rhs(min_rhs);
+      //
+      if (vx->g() != vx->rhs()) {
+        vx->calculate_key();
+        this->open_.insert(vx);
+      }
     }
   }
 }
@@ -101,12 +108,14 @@ void LPA::compute_shortest_path() {
     // Check if the vertex is over-consistent
     if (curr->g() > curr->rhs()) {
       curr->set_g(curr->rhs());
+      for (WtEdge edge : this->map_.boxes(curr->ind()).edges())
+        this->update_vx(&this->vxs_[edge.first]);
     } else {
       curr->set_g(INF);
+      for (WtEdge edge : this->map_.boxes(curr->ind()).edges())
+        this->update_vx(&this->vxs_[edge.first]);
       this->update_vx(curr);
     }
-    for (std::pair<size_t, float> edge : this->map_.boxes(curr->ind()).edges())
-      this->update_vx(&this->vxs_[edge.first]);
   }
 }
 
@@ -139,8 +148,8 @@ void LPA::update_map(std::list<Point> slam_pntcloud) {
   this->map_.slam_update(slam_pntcloud);
   for (size_t ind = 0; ind < this->map_.n(); ind++) {
     if (this->map_.updated(ind)) {
+      this->update_vx(&this->vxs_[ind]);
     }
-    this->update_vx(&this->vxs_[ind]);
   }
 }
 
