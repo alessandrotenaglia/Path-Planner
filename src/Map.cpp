@@ -56,20 +56,6 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     this->boxes_[ind].set_neighs(*neighs);
   }
 
-  // Link boxes close to each other
-  std::vector<size_t> *links;
-  for (size_t ind = 0; ind < this->n_; ind++) {
-    // Find links
-    links = util::find_links(size, ind);
-    if (links == NULL)
-      throw "find_neighbors() on " + std::to_string(ind) + " failed!";
-    // Set links
-    for (size_t link : *links) {
-      float wt = this->boxes_[ind].cnt().dist(this->boxes_[link].cnt());
-      this->boxes_[ind].add_edge(link, wt);
-    }
-  }
-
   // Assign fixed points to the respective boxes
   for (const Point &pnt : fix_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
@@ -96,6 +82,24 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
       }
       this->to_update_[ind] = false;
       this->updated_[ind] = true;
+    }
+  }
+
+  // Link boxes close to each other
+  std::vector<size_t> *links;
+  for (size_t ind = 0; ind < this->n_; ind++) {
+    if (!this->boxes_[ind].free())
+      continue;
+    // Find links
+    links = util::find_links(size, ind);
+    if (links == NULL)
+      throw "find_neighbors() on " + std::to_string(ind) + " failed!";
+    // Set links
+    for (size_t link : *links) {
+      if (this->boxes_[link].free()) {
+        float wt = this->boxes_[ind].cnt().dist(this->boxes_[link].cnt());
+        this->boxes_[ind].add_edge(link, wt);
+      }
     }
   }
 }

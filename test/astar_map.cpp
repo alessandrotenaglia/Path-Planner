@@ -89,7 +89,7 @@ int main() {
   std::list<const nav::Box *> path_from;
   path_from.push_back(&astar.map().boxes(curr_ind));
 
-  astar.update_map(slam_pntcloud);
+  // astar.update_map(slam_pntcloud);
 
   std::list<nav::Box *> *path_to;
   try {
@@ -164,6 +164,12 @@ int main() {
     }
 
     // Path
+    glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
+    size_t trg_ind = astar.trg()->ind();
+    gl::draw_box(astar.map().boxes(trg_ind).cnt().x(),
+                 astar.map().boxes(trg_ind).cnt().y(),
+                 astar.map().boxes(trg_ind).cnt().z(), map_xstep, map_ystep,
+                 map_zstep);
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
     for (const nav::Box *box : path_from) {
       gl::draw_box(box->cnt().x(), box->cnt().y(), box->cnt().z(), map_xstep,

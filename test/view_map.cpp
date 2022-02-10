@@ -126,7 +126,7 @@ int main() {
                      map_ystep, map_zstep);
     }
 
-    /*
+
       // Links
       for (const nav::Box &src : map.boxes()) {
         for (std::pair<size_t, float> edge : src.edges()) {
@@ -135,7 +135,6 @@ int main() {
                         dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
         }
       }
-    */
 
     // Swap frames and Process Events
     pangolin::FinishFrame();
