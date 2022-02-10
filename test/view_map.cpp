@@ -30,7 +30,7 @@ int main() {
 
   // Load config file
   cv::FileStorage fs;
-  fs.open("../config/my_config.yaml", cv::FileStorage::READ);
+  fs.open("../config/map_config.yaml", cv::FileStorage::READ);
   // Map config
   cv::FileNode map_cfg = fs["map"];
   float map_xlen = (float)map_cfg["xlen"];
@@ -103,16 +103,16 @@ int main() {
     // Points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &b : map.boxes()) {
-      for (const nav::Point &pnt : b.fix_pnts()) {
+    for (const nav::Box &box : map.boxes()) {
+      for (const nav::Point &pnt : box.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
     }
     glEnd();
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &b : map.boxes()) {
-      for (const nav::Point &pnt : b.slam_pnts()) {
+    for (const nav::Box &box : map.boxes()) {
+      for (const nav::Point &pnt : box.slam_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
     }
@@ -120,36 +120,21 @@ int main() {
 
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::Box &b : map.boxes()) {
-      if (!b.free()) //(!b.inside() || !b.free())
-        gl::draw_box(b.center().x(), b.center().y(), b.center().z(), map_xstep,
+    for (const nav::Box &box : map.boxes()) {
+      if (!box.free()) //(!b.inside() || !b.free())
+        gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
     }
 
     /*
-    // Links
-    for (nav::Box src : space.boxes()) {
-      for (std::pair<size_t, float> edge : src.edges()) {
-        nav::Box dest = space.boxes(edge.first);
-        mygl::draw_link(src.center().x(), src.center().y(), src.center().z(),
-                        dest.center().x(), dest.center().y(),
-                        dest.center().z());
-      }
-    }
-    */
-    /*
-    glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
-    nav::Point p(2.5, 2.5, 1.5);
-    size_t rnd_ind = map.pnt_to_ind(p);
-    for (size_t ind : space.boxes(rnd_ind).neighs()) {
-      nav::Box b = space.boxes(ind);
-      gl::draw_box(b.center().x(), b.center().y(), b.center().z(), xstep, ystep,
-                   zstep);
-    }
-    glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-    nav::Box b = space.boxes(rnd_ind);
-    gl::draw_cylinder(b.center().x(), b.center().y(), b.center().z(),
-                      drone_radius, drone_height);
+        // Links
+        for (const nav::Box &src : map.boxes()) {
+          for (std::pair<size_t, float> edge : src.edges()) {
+            nav::Box dest = map.boxes(edge.first);
+            gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
+                          dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
+          }
+        }
     */
 
     // Swap frames and Process Events

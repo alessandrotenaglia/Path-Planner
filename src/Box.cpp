@@ -28,7 +28,7 @@ void Box::add_edge(size_t dest, float wt) {
 
 // Convert a box in string form
 std::ostream &operator<<(std::ostream &os, const Box &box) {
-  os << "[" << box.ind() << "]: " << box.center();
+  os << "[" << box.ind() << "]: " << box.cnt();
   return os;
 }
 
