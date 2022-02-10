@@ -1,6 +1,6 @@
 /**
- * @file generate_pntcloud.h
- * @brief Source file for the view of the map
+ * @file aster_map.h
+ * @brief Source file for A*
  * @date 11 January 2022
  * @author Alessandro Tenaglia
  */
@@ -19,8 +19,8 @@
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
+#include "AStar.h"
 #include "Drawer.h"
-#include "Map.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
@@ -65,6 +65,41 @@ int main() {
     ia >> map;
   }
 
+  std::list<nav::Point> slam_pntcloud;
+  {
+    std::ifstream ifs("../data/slam_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> slam_pntcloud;
+  }
+
+  nav::Point p_str(2.5, 2.5, 1.5);
+  nav::Point p_trg(14.0, 6.0, 1.5);
+
+  nav::AStar astar(map);
+  try {
+    astar.set_str(p_str);
+    astar.set_trg(p_trg);
+    astar.initialize();
+  } catch (const char *err_msg) {
+    std::cerr << err_msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  size_t curr_ind = astar.str()->ind();
+  std::list<const nav::Box *> path_from;
+  path_from.push_back(&astar.map().boxes(curr_ind));
+
+  astar.update_map(slam_pntcloud);
+
+  std::list<nav::Box *> *path_to;
+  try {
+    astar.compute_shortest_path();
+    path_to = astar.path(curr_ind);
+  } catch (const char *err_msg) {
+    std::cerr << err_msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
   glMatrixMode(GL_MODELVIEW);
@@ -100,19 +135,21 @@ int main() {
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     gl::draw_xyplane(map_xlen, map_ylen);
 
-    // Points
+    // Fixed points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : map.boxes()) {
-      for (const nav::Point &pnt : box.fix_pnts()) {
+    for (const nav::Box &b : map.boxes()) {
+      for (const nav::Point &pnt : b.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
     }
     glEnd();
+
+    // SLAM points
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : map.boxes()) {
-      for (const nav::Point &pnt : box.slam_pnts()) {
+    for (const nav::Box &b : map.boxes()) {
+      for (const nav::Point &pnt : b.slam_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
     }
@@ -120,22 +157,23 @@ int main() {
 
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::Box &box : map.boxes()) {
+    for (const nav::Box &box : astar.map().boxes()) {
       if (!box.free()) //(!b.inside() || !b.free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
     }
 
-    /*
-      // Links
-      for (const nav::Box &src : map.boxes()) {
-        for (std::pair<size_t, float> edge : src.edges()) {
-          nav::Box dest = map.boxes(edge.first);
-          gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
-                        dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
-        }
-      }
-    */
+    // Path
+    glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
+    for (const nav::Box *box : path_from) {
+      gl::draw_box(box->cnt().x(), box->cnt().y(), box->cnt().z(), map_xstep,
+                   map_ystep, map_zstep);
+    }
+    glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
+    for (nav::Box *box : *path_to) {
+      gl::draw_box(box->cnt().x(), box->cnt().y(), box->cnt().z(), map_xstep,
+                   map_ystep, map_zstep);
+    }
 
     // Swap frames and Process Events
     pangolin::FinishFrame();

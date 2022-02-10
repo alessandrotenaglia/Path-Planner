@@ -52,7 +52,7 @@ public:
 
   // Initialize a map
   Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
-      float radius, float height, std::list<Point> pntcloud);
+      float radius, float height, std::list<Point> fix_pntcloud);
 
   // Set number of boxes
   void set_n(size_t n) { n_ = n; }
@@ -68,6 +68,9 @@ public:
   Box &boxes(size_t ind) { return boxes_[ind]; }
   // Get ind-th box
   const Box &boxes(size_t ind) const { return boxes_[ind]; }
+
+  // Get updated box
+  const bool updated(size_t ind) const { return updated_[ind]; }
 
   // Assign SLAM points to the respective boxes
   void add_slam_pntcloud(std::list<Point> slam_pntcloud);

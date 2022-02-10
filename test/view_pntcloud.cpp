@@ -58,11 +58,18 @@ int main() {
   double window_xstart = (double)window_cfg["xstart"];
   double window_ystart = (double)window_cfg["ystart"];
 
-  nav::Map map;
+  std::list<nav::Point> fix_pntcloud;
   {
-    std::ifstream ifs("../data/map.dat");
+    std::ifstream ifs("../data/fix_pntcloud.dat");
     boost::archive::binary_iarchive ia(ifs);
-    ia >> map;
+    ia >> fix_pntcloud;
+  }
+
+  std::list<nav::Point> slam_pntcloud;
+  {
+    std::ifstream ifs("../data/slam_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> slam_pntcloud;
   }
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
@@ -103,39 +110,16 @@ int main() {
     // Points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : map.boxes()) {
-      for (const nav::Point &pnt : box.fix_pnts()) {
-        glVertex3f(pnt.x(), pnt.y(), pnt.z());
-      }
+    for (const nav::Point &pnt : fix_pntcloud) {
+      glVertex3f(pnt.x(), pnt.y(), pnt.z());
     }
     glEnd();
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : map.boxes()) {
-      for (const nav::Point &pnt : box.slam_pnts()) {
-        glVertex3f(pnt.x(), pnt.y(), pnt.z());
-      }
+    for (const nav::Point &pnt : slam_pntcloud) {
+      glVertex3f(pnt.x(), pnt.y(), pnt.z());
     }
     glEnd();
-
-    // Boxes
-    glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::Box &box : map.boxes()) {
-      if (!box.free()) //(!b.inside() || !b.free())
-        gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
-                     map_ystep, map_zstep);
-    }
-
-    /*
-      // Links
-      for (const nav::Box &src : map.boxes()) {
-        for (std::pair<size_t, float> edge : src.edges()) {
-          nav::Box dest = map.boxes(edge.first);
-          gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
-                        dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
-        }
-      }
-    */
 
     // Swap frames and Process Events
     pangolin::FinishFrame();

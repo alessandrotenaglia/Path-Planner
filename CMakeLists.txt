@@ -26,8 +26,10 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${Pangolin_INCLUDE_DIRS})
 
 # Create a shared library with common source files.
-add_library(${PROJECT_NAME}_utils STATIC src/Box.cpp
+add_library(${PROJECT_NAME}_utils STATIC src/AStar.cpp
+                                         src/Box.cpp
                                          src/Drawer.cpp
+                                         src/LPA.cpp
                                          src/Map.cpp
                                          src/Point.cpp
                                          src/Util.cpp)
@@ -39,8 +41,17 @@ target_link_libraries(${PROJECT_NAME}_utils PRIVATE ${Pangolin_LIBRARIES})
 add_executable(gen_pntcloud test/generate_pntcloud.cpp)
 target_link_libraries(gen_pntcloud PRIVATE ${PROJECT_NAME}_utils)
 
+add_executable(view_pntcloud test/view_pntcloud.cpp)
+target_link_libraries(view_pntcloud PRIVATE ${PROJECT_NAME}_utils)
+
 add_executable(gen_map test/generate_map.cpp)
 target_link_libraries(gen_map PRIVATE ${PROJECT_NAME}_utils)
 
 add_executable(view_map test/view_map.cpp)
 target_link_libraries(view_map PRIVATE ${PROJECT_NAME}_utils)
+
+add_executable(astar test/astar_map.cpp)
+target_link_libraries(astar PRIVATE ${PROJECT_NAME}_utils)
+
+add_executable(lpa test/lpa_map.cpp)
+target_link_libraries(lpa PRIVATE ${PROJECT_NAME}_utils)

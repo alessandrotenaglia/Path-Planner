@@ -202,17 +202,17 @@ int main() {
 
   nav::Point O11(4.5, 2.5, 0.0);
   nav::Point O12(5.0, 3.0, 3.0);
-  auto O1 = std::make_pair(O11, O11);
+  auto O1 = std::make_pair(O11, O12);
   slam_obstacles.push_back(O1);
 
   nav::Point O21(7.0, 4.5, 0.0);
   nav::Point O22(7.5, 5.0, 3.0);
-  auto O2 = std::make_pair(O21, O21);
+  auto O2 = std::make_pair(O21, O22);
   slam_obstacles.push_back(O2);
 
   nav::Point O31(13.5, 4.5, 0.0);
   nav::Point O32(14.0, 5.0, 3.0);
-  auto O3 = std::make_pair(O31, O31);
+  auto O3 = std::make_pair(O31, O32);
   slam_obstacles.push_back(O3);
 
   std::list<nav::Point> slam_pntcloud;
