@@ -27,11 +27,11 @@ namespace nav {
 
 class ASVx {
 private:
-  size_t ind_; //
-  float f_;    //
-  float g_;    //
-  float h_;    //
-  ASVx *pred_; //
+  size_t ind_; // Linear index
+  float f_;    // Priority value
+  float g_;    // Cost to vertex
+  float h_;    // Heuristic to target
+  ASVx *pred_; // Predecessor
 
 public:
   // Default constructor

@@ -25,12 +25,13 @@ namespace nav {
 
 class AStar {
 private:
-  Map map_;
-  std::vector<ASVx> vxs_;
-  ASVx *str_;
-  ASVx *trg_;
-  std::set<ASVx *, ASVxCmp> open_;
-  std::unordered_set<size_t> closed_;
+  Map map_;                           //
+  std::vector<ASVx> vxs_;             //
+  ASVx *curr_;                        //
+  ASVx *str_;                         //
+  ASVx *trg_;                         //
+  std::set<ASVx *, ASVxCmp> open_;    //
+  std::unordered_set<size_t> closed_; //
 
 public:
   // Default constructor
@@ -41,6 +42,11 @@ public:
 
   // Get map
   const Map &map() const { return map_; };
+
+  // Set curr vertex
+  void set_curr(size_t curr_ind);
+  // Get curr vertex
+  ASVx *curr() { return curr_; };
 
   // Set start vertex
   void set_str(const Point &p_str);
@@ -58,7 +64,7 @@ public:
 
   std::list<Box *> *path(size_t src_ind);
 
-  void update_map(std::list<Point> slam_pntcloud);
+  void update(std::list<Point> slam_pntcloud);
 };
 
 } // namespace nav

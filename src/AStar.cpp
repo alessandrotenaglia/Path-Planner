@@ -38,6 +38,8 @@ void AStar::set_str(const Point &p_str) {
     throw "ERROR: Start box is not free!";
   // Set start vertex
   this->str_ = &this->vxs_[ind_str];
+  // Set curr vertex
+  this->curr_ = this->str_;
 }
 
 // Set target vertex
@@ -51,6 +53,12 @@ void AStar::set_trg(const Point &p_trg) {
     throw "ERROR: Target box is not free!";
   // Set target vertex
   this->trg_ = &this->vxs_[ind_trg];
+}
+
+// Set curr vertex
+void AStar::set_curr(size_t curr_ind) {
+  // Set start vertex
+  this->curr_ = &this->vxs_[curr_ind];
 }
 
 void AStar::initialize() {
@@ -129,18 +137,22 @@ void AStar::compute_shortest_path() {
 
 std::list<Box *> *AStar::path(size_t src_ind) {
   auto *path = new std::list<Box *>;
-  ASVx *curr = this->trg_;
-  while (curr->ind() != src_ind) {
-    path->push_front(&this->map_.boxes(curr->ind()));
-    curr = curr->get_pred();
-    if (curr == NULL)
+  ASVx *vx = this->trg_;
+  while (vx->ind() != src_ind) {
+    path->push_front(&this->map_.boxes(vx->ind()));
+    vx = vx->get_pred();
+    if (vx == NULL)
       throw "ERROR: No path found";
   }
   return path;
 }
 
-void AStar::update_map(std::list<Point> slam_pntcloud) {
-  this->map_.slam_update(slam_pntcloud);
+void AStar::update(std::list<Point> slam_pntcloud) {
+  size_t nobst = this->map_.slam_update(slam_pntcloud);
+  if (nobst > 0) {
+    this->str_ = this->curr_;
+    this->compute_shortest_path();
+  }
 }
 
 } // namespace nav

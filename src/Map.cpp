@@ -116,7 +116,10 @@ void Map::add_slam_pntcloud(std::list<Point> slam_pntcloud) {
 }
 
 // Set SLAM obsatcles
-void Map::set_slam_obstacles() {
+size_t Map::set_slam_obstacles() {
+  // Number of new obstacle
+  size_t nobst = 0;
+  // Loop on boxes
   for (size_t ind = 0; ind < this->n_; ind++) {
     if (this->to_update_[ind]) {
       size_t count = 0;
@@ -126,6 +129,7 @@ void Map::set_slam_obstacles() {
               abs(this->boxes_[ind].cnt().z() - pnt.z()) <= this->height_)
             count++;
           if (count > 0) {
+            nobst++;
             this->boxes_[ind].set_free(false);
             this->updated_[ind] = true;
             break;
@@ -136,10 +140,11 @@ void Map::set_slam_obstacles() {
       }
     }
   }
+  return nobst;
 }
 
 // Update map from SLAM pointcloud
-void Map::slam_update(std::list<Point> slam_pntcloud) {
+size_t Map::slam_update(std::list<Point> slam_pntcloud) {
   for (size_t ind = 0; ind < this->n_; ind++) {
     this->boxes_[ind].remove_slam_pnts();
     if (this->updatable_[ind])
@@ -150,7 +155,7 @@ void Map::slam_update(std::list<Point> slam_pntcloud) {
   // Assign SLAM points to the respective boxes
   this->add_slam_pntcloud(slam_pntcloud);
   // Set SLAM obsatcles
-  this->set_slam_obstacles();
+  return this->set_slam_obstacles();
 }
 
 // Compute the index of the corresponding box
