@@ -72,8 +72,8 @@ int main() {
     ia >> slam_pntcloud;
   }
 
-  nav::Point p_str(2.5, 2.5, 1.5);
-  nav::Point p_trg(14.5, 6.0, 1.5);
+  nav::Point p_str(1.5, 5.5, 1.5);
+  nav::Point p_trg(18.0, 4.5, 1.5);
 
   nav::AStar astar(map);
   try {
@@ -112,7 +112,7 @@ int main() {
           .SetHandler(&handler);
 
   size_t cnt = 0;
-  size_t fps = 100;
+  size_t fps = 50;
 
   while (!pangolin::ShouldQuit()) {
     // Clear screen and activate view to render into

@@ -142,6 +142,8 @@ void Map::set_slam_obstacles() {
 void Map::slam_update(std::list<Point> slam_pntcloud) {
   for (size_t ind = 0; ind < this->n_; ind++) {
     this->boxes_[ind].remove_slam_pnts();
+    if (this->updatable_[ind])
+      this->boxes(ind).set_free(true);
     this->to_update_[ind] = false;
     this->updated_[ind] = false;
   }
