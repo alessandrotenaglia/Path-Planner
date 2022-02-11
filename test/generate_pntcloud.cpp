@@ -22,37 +22,37 @@
 /*                              Main Definition                              */
 /*---------------------------------------------------------------------------*/
 
-#define A 0.5
-#define B 1.5
-#define C 2.5
-#define D 3.5
-#define E 4.5
-#define F 5.5
-#define G 6.5
-#define H 7.5
-#define I 8.5
-#define L 9.5
+#define _A 0.5
+#define _B 1.5
+#define _C 2.5
+#define _D 3.5
+#define _E 4.5
+#define _F 5.5
+#define _G 6.5
+#define _H 7.5
+#define _I 8.5
+#define _L 9.5
 
-#define c1 19.5
-#define c2 18.5
-#define c3 17.5
-#define c4 16.5
-#define c5 15.5
-#define c6 14.5
-#define c7 13.5
-#define c8 12.5
-#define c9 11.5
-#define c10 10.5
-#define c11 9.5
-#define c12 8.5
-#define c13 7.5
-#define c14 6.5
-#define c15 5.5
-#define c16 4.5
-#define c17 3.5
-#define c18 2.5
-#define c19 1.5
-#define c20 0.5
+#define _1 19.5
+#define _2 18.5
+#define _3 17.5
+#define _4 16.5
+#define _5 15.5
+#define _6 14.5
+#define _7 13.5
+#define _8 12.5
+#define _9 11.5
+#define _10 10.5
+#define _11 9.5
+#define _12 8.5
+#define _13 7.5
+#define _14 6.5
+#define _15 5.5
+#define _16 4.5
+#define _17 3.5
+#define _18 2.5
+#define _19 1.5
+#define _20 0.5
 
 std::pair<nav::Point, nav::Point> make_obstacle(float x, float y) {
   nav::Point O1(x - 0.25, y - 0.25, 0.0);
@@ -239,10 +239,10 @@ int main() {
 
   std::list<std::pair<nav::Point, nav::Point>> slam_obstacles;
 
-  slam_obstacles.push_back(make_obstacle(c6, E));
-  slam_obstacles.push_back(make_obstacle(c13, E));
-  slam_obstacles.push_back(make_obstacle(c16, F));
-  slam_obstacles.push_back(make_obstacle(c7, G));
+  slam_obstacles.push_back(make_obstacle(_6, _E));
+  slam_obstacles.push_back(make_obstacle(_13, _E));
+  slam_obstacles.push_back(make_obstacle(_16, _F));
+  slam_obstacles.push_back(make_obstacle(_7, _G));
 
   std::list<nav::Point> slam_pntcloud;
   for (std::pair<nav::Point, nav::Point> &obs : slam_obstacles) {

@@ -36,7 +36,7 @@ private:
   std::list<Point> fix_pnts_;  // Fixed points
   std::list<Point> slam_pnts_; // SLAM points
   std::vector<size_t> neighs_; // Neighbors
-  std::vector<WtEdge> edges_;  // Edges with neighbors
+  std::vector<WtEdge> edges_;  // Edges
 
   // Box serialization
   friend class boost::serialization::access;

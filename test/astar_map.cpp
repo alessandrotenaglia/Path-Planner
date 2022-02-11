@@ -73,7 +73,7 @@ int main() {
   }
 
   nav::Point p_str(2.5, 2.5, 1.5);
-  nav::Point p_trg(14.0, 6.0, 1.5);
+  nav::Point p_trg(14.5, 6.0, 1.5);
 
   nav::AStar astar(map);
   try {
@@ -112,7 +112,7 @@ int main() {
           .SetHandler(&handler);
 
   size_t cnt = 0;
-  size_t fps = 50;
+  size_t fps = 100;
 
   while (!pangolin::ShouldQuit()) {
     // Clear screen and activate view to render into
@@ -123,8 +123,13 @@ int main() {
     // Compute shortest path
     if ((cnt % fps) == 0) {
       if (curr_ind != astar.trg()->ind()) {
-        astar.compute_shortest_path();
-        path_to = astar.path(curr_ind);
+        try {
+          astar.compute_shortest_path();
+          path_to = astar.path(curr_ind);
+        } catch (const char *err_msg) {
+          std::cerr << err_msg << std::endl;
+          exit(EXIT_FAILURE);
+        }
       }
     }
 
@@ -177,15 +182,22 @@ int main() {
 
     if ((cnt % fps) == 0) {
       if (curr_ind != astar.trg()->ind()) {
-        curr_ind = path_to->front()->ind();
-        path_from.push_back(&astar.map().boxes(curr_ind));
-        astar.update_map(slam_pntcloud);
-      }
-    }
 
-    if ((cnt % fps) == 0) {
-      if (curr_ind != astar.trg()->ind()) {
-        astar.update_map(slam_pntcloud);
+        curr_ind = path_to->front()->ind();
+        nav::Point curr_pnt = astar.map().boxes(curr_ind).cnt();
+        astar.set_str(curr_pnt);
+        path_from.push_back(&astar.map().boxes(curr_ind));
+
+        nav::Point p1(curr_pnt.x() - 2, curr_pnt.y() - 2, curr_pnt.z() - 2);
+        nav::Point p2(curr_pnt.x() + 2, curr_pnt.y() + 2, curr_pnt.z() + 2);
+        std::list<nav::Point> pntcloud;
+        for (const nav::Point &pnt : slam_pntcloud) {
+          if ((p1.x() <= pnt.x() && pnt.x() <= p2.x()) &&
+              (p1.y() <= pnt.y() && pnt.y() <= p2.y()) &&
+              (p1.z() <= pnt.z() && pnt.z() <= p2.z()))
+            pntcloud.push_back(pnt);
+        }
+        astar.update_map(pntcloud);
       }
     }
 

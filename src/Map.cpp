@@ -24,14 +24,11 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
       n_(nx * ny * nz), xstep_(xlen / nx), ystep_(ylen / ny), zstep_(zlen / nz),
       radius_(radius), height_(height), boxes_(n_), updatable_(n_, true),
       to_update_(n_, true), updated_(n_, false) {
-
   // Map size
   std::vector<size_t> size = {this->nx_, this->ny_, this->nz_};
-
   // Set the size of the surrounding
   int xy_level = (int)ceil((this->radius_ - this->xstep_ / 2) / this->xstep_);
   int z_level = (int)ceil((this->height_ - this->zstep_ / 2) / this->zstep_);
-
   // Divide the space in boxes
   std::vector<size_t> *idxs;
   std::vector<size_t> *neighs;
@@ -57,36 +54,35 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
       throw "find_neighs() on " + std::to_string(ind) + " failed!";
     this->boxes_[ind].set_neighs(*neighs);
   }
-
   // Assign fixed points to the respective boxes
   for (const Point &pnt : fix_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
     if (ind < this->n_)
       this->boxes_[ind].add_fix_pnt(pnt);
   }
-
   // Set fixed obstacles
   for (size_t ind = 0; ind < this->n_; ind++) {
     if (this->to_update_[ind]) {
-      bool ok = true;
+      size_t count = 0;
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
         for (const Point &pnt : this->boxes_[ind_neigh].fix_pnts()) {
           if (this->boxes_[ind].cnt().dist_xy(pnt) <= this->radius_ &&
               abs(this->boxes_[ind].cnt().z() - pnt.z()) <= this->height_) {
-            ok = false;
-            this->boxes_[ind].set_free(false);
-            this->updatable_[ind] = false;
-            break;
+            count++;
+            if (count > 0) {
+              this->boxes_[ind].set_free(false);
+              this->updatable_[ind] = false;
+              break;
+            }
           }
         }
-        if (!ok)
+        if (count > 0)
           break;
       }
       this->to_update_[ind] = false;
       this->updated_[ind] = true;
     }
   }
-
   // Link boxes close to each other
   std::vector<size_t> *links;
   for (size_t ind = 0; ind < this->n_; ind++) {
@@ -132,16 +128,6 @@ void Map::set_slam_obstacles() {
           if (count > 0) {
             this->boxes_[ind].set_free(false);
             this->updated_[ind] = true;
-            for (WtEdge edge_from : this->boxes(ind).edges()) {
-              edge_from.second = INF;
-              for (WtEdge edge_to : this->boxes(edge_from.first).edges()) {
-                if (edge_to.first == ind) {
-                  edge_to.second = INF;
-                  this->updated_[edge_from.first] = true;
-                  break;
-                }
-              }
-            }
             break;
           }
         }
