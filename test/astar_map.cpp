@@ -25,6 +25,22 @@
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
 /*---------------------------------------------------------------------------*/
+std::list<nav::Point> get_pntcloud(nav::AStar astar, size_t curr_ind,
+                                   size_t curr_dir,
+                                   std::list<nav::Point> slam_pntcloud) {
+  nav::Point curr_pnt = astar.map().boxes(curr_ind).cnt();
+  nav::Point p1(curr_pnt.x() - 2, curr_pnt.y() - 2, curr_pnt.z() - 2);
+  nav::Point p2(curr_pnt.x() + 2, curr_pnt.y() + 2, curr_pnt.z() + 2);
+  std::list<nav::Point> pntcloud;
+  for (const nav::Point &pnt : slam_pntcloud) {
+    if ((p1.x() <= pnt.x() && pnt.x() <= p2.x()) &&
+        (p1.y() <= pnt.y() && pnt.y() <= p2.y()) &&
+        (p1.z() <= pnt.z() && pnt.z() <= p2.z()))
+      pntcloud.push_back(pnt);
+  }
+  return pntcloud;
+}
+
 int main() {
   std::cout << "Il godo..." << std::endl;
 
@@ -64,6 +80,7 @@ int main() {
     boost::archive::binary_iarchive ia(ifs);
     ia >> map;
   }
+  nav::AStar astar(map);
 
   std::list<nav::Point> slam_pntcloud;
   {
@@ -73,9 +90,8 @@ int main() {
   }
 
   nav::Point trg_pnt(1.5, 3.5, 1.5);
-  nav::Point str_pnt(18.0, 4.5, 1.5);
+  nav::Point str_pnt(17.5, 4.5, 1.5);
 
-  nav::AStar astar(map);
   std::list<const nav::Box *> path_from;
   std::list<nav::Box *> *path_to;
   try {
@@ -88,10 +104,10 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  std::list<nav::Point> pntcloud;
   size_t curr_ind = path_to->front()->ind();
+  size_t curr_dir = 0;
   size_t cnt = 0;
-  size_t fps = 20;
+  size_t fps = 1000;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -123,22 +139,9 @@ int main() {
 
     if ((cnt % fps) == 0) {
       if (curr_ind != astar.trg()->ind()) {
-        pntcloud.clear();
-        nav::Point p_curr = astar.map().boxes(curr_ind).cnt();
-        nav::Point p1(p_curr.x() - 3, p_curr.y() - 3, p_curr.z() - 3);
-        nav::Point p2(p_curr.x() + 3, p_curr.y() + 3, p_curr.z() + 3);
-        for (const nav::Point &pnt : slam_pntcloud) {
-          if ((p1.x() <= pnt.x() && pnt.x() <= p2.x()) &&
-              (p1.y() <= pnt.y() && pnt.y() <= p2.y()) &&
-              (p1.z() <= pnt.z() && pnt.z() <= p2.z()))
-            pntcloud.push_back(pnt);
-        }
-      }
-    }
-
-    if ((cnt % fps) == 0) {
-      if (curr_ind != astar.trg()->ind()) {
         try {
+          std::list<nav::Point> pntcloud =
+              get_pntcloud(astar, curr_ind, curr_dir, slam_pntcloud);
           astar.update(curr_ind, pntcloud);
           path_to = astar.path(curr_ind);
         } catch (const char *err_msg) {

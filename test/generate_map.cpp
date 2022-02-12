@@ -61,18 +61,19 @@ int main() {
     ia >> fix_pntcloud;
   }
 
-  nav::Map pre_map;
+  nav::Map map;
   try {
-    pre_map = nav::Map(map_xlen, map_ylen, map_zlen, map_nx, map_ny, map_nz,
-                       drone_radius, drone_height, fix_pntcloud);
+    map = nav::Map(map_xlen, map_ylen, map_zlen, map_nx, map_ny, map_nz,
+                   drone_radius, drone_height, fix_pntcloud);
   } catch (const char *msg) {
     std::cerr << msg << std::endl;
     exit(EXIT_FAILURE);
   }
+
   {
     std::ofstream ofs("../data/map.dat");
     boost::archive::binary_oarchive oa(ofs);
-    oa << pre_map;
+    oa << map;
   }
 
   return 0;

@@ -39,8 +39,6 @@ void AStar::set_str(const Point &str_pnt) {
     throw "ERROR: Start box is not free!";
   // Set start vertex
   this->str_ = &this->vxs_[str_ind];
-  // Set curr vertex
-  this->curr_ = this->str_;
 }
 
 // Set start vertex from index
@@ -66,6 +64,14 @@ void AStar::set_trg(const Point &trg_pnt) {
     throw "ERROR: Target box is not free!";
   // Set target vertex
   this->trg_ = &this->vxs_[trg_ind];
+  // Initialize vertices
+  for (size_t ind = 0; ind < this->map_.n(); ind++) {
+    float h = INF;
+    if (this->map_.boxes(ind).free())
+      h = this->map_.boxes(ind).cnt().dist(
+          this->map_.boxes(this->trg_->ind()).cnt());
+    this->vxs_[ind].init(h);
+  }
 }
 
 // Get path
@@ -81,17 +87,8 @@ std::list<Box *> *AStar::path(size_t curr_ind) {
   return path;
 }
 
-//
+// !! There is a bug
 void AStar::compute_shortest_path() {
-  // TODO update only updated box
-  // Initialize vertices
-  for (size_t ind = 0; ind < this->map_.n(); ind++) {
-    float h = INF;
-    if (this->map_.boxes(ind).free())
-      h = this->map_.boxes(ind).cnt().dist(
-          this->map_.boxes(this->trg_->ind()).cnt());
-    this->vxs_[ind].init(h);
-  }
   // Initialize open and close set
   auto *open = new std::set<ASVx *, ASVxCmp>();
   auto *closed = new std::unordered_set<size_t>();
@@ -157,6 +154,17 @@ void AStar::compute_shortest_path() {
 
 void AStar::update(size_t curr_ind, std::list<Point> slam_pntcloud) {
   if (this->map_.slam_update(slam_pntcloud) > 0) {
+    // TODO update only updated box
+    // Initialize vertices
+    for (size_t ind = 0; ind < this->map_.n(); ind++) {
+      if (this->map_.updated(ind)) {
+        float h = INF;
+        if (this->map_.boxes(ind).free())
+          h = this->map_.boxes(ind).cnt().dist(
+              this->map_.boxes(this->trg_->ind()).cnt());
+        this->vxs_[ind].init(h);
+      }
+    }
     this->set_str(curr_ind);
     this->compute_shortest_path();
   }

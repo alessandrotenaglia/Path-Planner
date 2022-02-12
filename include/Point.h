@@ -74,6 +74,9 @@ public:
   // Compute the Euclidean distance between two points
   float dist(const Point &other) const;
 
+  // Compute the angle between two points
+  float angle_xy(const Point &other) const;
+
   // Check if two points are equals
   bool operator==(const Point &other);
 

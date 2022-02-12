@@ -42,6 +42,13 @@ float Point::dist(const Point &other) const {
   return sqrt((dx * dx) + (dy * dy) + (dz * dz));
 }
 
+// Compute the angle between two points
+float Point::angle_xy(const Point &other) const {
+  float dx = other.x() - this->x();
+  float dy = other.y() - this->y();
+  return atan2(dy, dx);
+}
+
 // Check if two points are equals
 bool Point::operator==(const Point &other) {
   return (this->x_ == other.x()) & (this->y_ == other.y()) &

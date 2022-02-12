@@ -25,11 +25,10 @@ namespace nav {
 
 class AStar {
 private:
-  Map map_;               //
-  std::vector<ASVx> vxs_; //
-  ASVx *str_;             //
-  ASVx *trg_;             //
-  ASVx *curr_;            //
+  Map map_;               // Map
+  std::vector<ASVx> vxs_; // Vertices
+  ASVx *str_;             // Start vertex
+  ASVx *trg_;             // Target vertex
 
 public:
   // Default constructor

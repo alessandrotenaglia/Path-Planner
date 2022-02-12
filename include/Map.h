@@ -76,10 +76,10 @@ public:
   void add_slam_pntcloud(std::list<Point> slam_pntcloud);
 
   // Set SLAM obsatcles
-  size_t set_slam_obstacles();
+  bool set_slam_obstacles();
 
   // Update map from SLAM pointcloud
-  size_t slam_update(std::list<Point> slam_pntcloud);
+  bool slam_update(std::list<Point> slam_pntcloud);
 
   // Compute the index of the corresponding box
   size_t pnt_to_ind(const Point &pnt);
