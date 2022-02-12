@@ -72,21 +72,26 @@ int main() {
     ia >> slam_pntcloud;
   }
 
-  nav::Point p_str(1.5, 5.5, 1.5);
-  nav::Point p_trg(18.0, 4.5, 1.5);
+  nav::Point trg_pnt(1.5, 3.5, 1.5);
+  nav::Point str_pnt(18.0, 4.5, 1.5);
 
   nav::AStar astar(map);
   std::list<const nav::Box *> path_from;
   std::list<nav::Box *> *path_to;
   try {
-    astar.set_str(p_str);
-    astar.set_trg(p_trg);
+    astar.set_str(str_pnt);
+    astar.set_trg(trg_pnt);
     astar.compute_shortest_path();
-    path_to = astar.path(astar.curr()->ind());
+    path_to = astar.path(astar.str()->ind());
   } catch (const char *err_msg) {
     std::cerr << err_msg << std::endl;
     exit(EXIT_FAILURE);
   }
+
+  std::list<nav::Point> pntcloud;
+  size_t curr_ind = path_to->front()->ind();
+  size_t cnt = 0;
+  size_t fps = 20;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -110,11 +115,6 @@ int main() {
           .SetBounds(0.0, 1.0, 0.0, 1.0, (float)-window_width / window_height)
           .SetHandler(&handler);
 
-  std::list<nav::Point> pntcloud;
-  size_t curr_ind;
-  size_t cnt = 0;
-  size_t fps = 50;
-
   while (!pangolin::ShouldQuit()) {
     // Clear screen and activate view to render into
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -122,10 +122,11 @@ int main() {
     glClearColor(1.0f, 1.0f, 1.0f, 0.2f);
 
     if ((cnt % fps) == 0) {
-      if (astar.curr()->ind() != astar.trg()->ind()) {
-        nav::Point p_curr = astar.map().boxes(astar.curr()->ind()).cnt();
-        nav::Point p1(p_curr.x() - 2, p_curr.y() - 2, p_curr.z() - 2);
-        nav::Point p2(p_curr.x() + 2, p_curr.y() + 2, p_curr.z() + 2);
+      if (curr_ind != astar.trg()->ind()) {
+        pntcloud.clear();
+        nav::Point p_curr = astar.map().boxes(curr_ind).cnt();
+        nav::Point p1(p_curr.x() - 3, p_curr.y() - 3, p_curr.z() - 3);
+        nav::Point p2(p_curr.x() + 3, p_curr.y() + 3, p_curr.z() + 3);
         for (const nav::Point &pnt : slam_pntcloud) {
           if ((p1.x() <= pnt.x() && pnt.x() <= p2.x()) &&
               (p1.y() <= pnt.y() && pnt.y() <= p2.y()) &&
@@ -136,17 +137,16 @@ int main() {
     }
 
     if ((cnt % fps) == 0) {
-      if (astar.curr()->ind() != astar.trg()->ind()) {
+      if (curr_ind != astar.trg()->ind()) {
         try {
-          astar.update(pntcloud);
-          path_to = astar.path(astar.curr()->ind());
+          astar.update(curr_ind, pntcloud);
+          path_to = astar.path(curr_ind);
         } catch (const char *err_msg) {
           std::cerr << err_msg << std::endl;
           exit(EXIT_FAILURE);
         }
         //
         curr_ind = path_to->front()->ind();
-        astar.set_curr(curr_ind);
         path_from.push_back(&astar.map().boxes(curr_ind));
       }
     }
@@ -190,8 +190,8 @@ int main() {
 
     // Path
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
-    nav::Box bb = astar.map().boxes(astar.curr()->ind());
-    gl::draw_box(bb.cnt().x(), bb.cnt().y(), bb.cnt().z(), map_xstep,
+    nav::Box box = astar.map().boxes(curr_ind);
+    gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                  map_ystep, map_zstep);
     /*for (const nav::Box *box : path_from) {
       gl::draw_box(box->cnt().x(), box->cnt().y(), box->cnt().z(), map_xstep,
