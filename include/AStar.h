@@ -53,7 +53,7 @@ public:
   ASVx *trg() { return trg_; };
 
   // Get path
-  std::list<Box *> *path(size_t curr_ind);
+  std::list<const Box *> *path(size_t curr_ind);
 
   void compute_shortest_path();
 

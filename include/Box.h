@@ -70,12 +70,12 @@ public:
   const bool &free() const { return free_; }
 
   // Add a fixed point inside the box
-  void add_fix_pnt(const Point &pnt);
+  void add_fix_pnt(const Point &pnt) { fix_pnts_.push_back(pnt); }
   // Get fixed points inside the box
   const std::list<Point> &fix_pnts() const { return fix_pnts_; }
 
   // Add a SLAM point inside the box
-  void add_slam_pnt(const Point &pnt);
+  void add_slam_pnt(const Point &pnt) { slam_pnts_.push_back(pnt); }
   // Get SLAM points inside the box
   const std::list<Point> &slam_pnts() const { return slam_pnts_; }
   // Remove SLAM points
@@ -87,7 +87,9 @@ public:
   const std::vector<size_t> &neighs() const { return neighs_; }
 
   // Add an edge
-  void add_edge(size_t dest, float wt);
+  void add_edge(size_t dest, float wt) {
+    edges_.push_back(std::make_pair(dest, wt));
+  }
   // Get edges with neighbors
   const std::vector<WtEdge> &edges() const { return edges_; }
 

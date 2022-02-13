@@ -34,16 +34,16 @@ private:
   float xstep_, ystep_, zstep_; // Steps length
   float radius_, height_;       // Drone dimensions
   std::vector<Box> boxes_;      // Vector containing all boxes
-  std::vector<bool> updatable_; // Vector containing box indices updatable
-  std::vector<bool> to_update_; // Vector containing box indices to update
-  std::vector<bool> updated_;   // Vector containing box indices updated
+  std::vector<bool> updatable_; // Indexes that can be updated
+  std::vector<bool> toverify_;  // Indices to be verified
+  std::vector<bool> updated_;   // Updated indexes
 
   // Map serialization
   friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &xlen_ &ylen_ &zlen_ &nx_ &ny_ &nz_ &n_ &xstep_ &ystep_ &zstep_ &radius_
-        &height_ &boxes_ &updatable_ &to_update_ &updated_;
+        &height_ &boxes_ &updatable_ &toverify_ &updated_;
   }
 
 public:
@@ -59,13 +59,9 @@ public:
   // Get number of Boxes
   const size_t &n() const { return n_; }
 
-  // Set boxes
-  std::vector<Box> &boxes() { return boxes_; }
   // Get boxes
   const std::vector<Box> &boxes() const { return boxes_; }
 
-  // Set ind-th box
-  Box &boxes(size_t ind) { return boxes_[ind]; }
   // Get ind-th box
   const Box &boxes(size_t ind) const { return boxes_[ind]; }
 
@@ -76,7 +72,7 @@ public:
   void add_slam_pntcloud(std::list<Point> slam_pntcloud);
 
   // Set SLAM obsatcles
-  bool set_slam_obstacles();
+  void set_slam_obstacles();
 
   // Update map from SLAM pointcloud
   bool slam_update(std::list<Point> slam_pntcloud);

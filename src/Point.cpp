@@ -51,8 +51,8 @@ float Point::angle_xy(const Point &other) const {
 
 // Check if two points are equals
 bool Point::operator==(const Point &other) {
-  return (this->x_ == other.x()) & (this->y_ == other.y()) &
-         (this->z_ == other.z());
+  return ((this->x_ == other.x()) & (this->y_ == other.y()) &
+          (this->z_ == other.z()));
 }
 
 // Convert a point in string form

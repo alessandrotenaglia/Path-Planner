@@ -89,11 +89,11 @@ int main() {
     ia >> slam_pntcloud;
   }
 
-  nav::Point trg_pnt(1.5, 3.5, 1.5);
-  nav::Point str_pnt(17.5, 4.5, 1.5);
+  nav::Point str_pnt(1.0, 3.5, 1.5);
+  nav::Point trg_pnt(5.5, 4.5, 1.5);
 
   std::list<const nav::Box *> path_from;
-  std::list<nav::Box *> *path_to;
+  std::list<const nav::Box *> *path_to;
   try {
     astar.set_str(str_pnt);
     astar.set_trg(trg_pnt);
@@ -104,10 +104,10 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  size_t curr_ind = path_to->front()->ind();
+  size_t curr_ind = astar.str()->ind(); //->front()->ind();
   size_t curr_dir = 0;
   size_t cnt = 0;
-  size_t fps = 1000;
+  size_t fps = 500;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -137,12 +137,12 @@ int main() {
     d_cam.Activate(s_cam);
     glClearColor(1.0f, 1.0f, 1.0f, 0.2f);
 
-    if ((cnt % fps) == 0) {
+    /*if ((cnt % fps) == 0) {
       if (curr_ind != astar.trg()->ind()) {
         try {
           std::list<nav::Point> pntcloud =
               get_pntcloud(astar, curr_ind, curr_dir, slam_pntcloud);
-          astar.update(curr_ind, pntcloud);
+          // astar.update(curr_ind, pntcloud);
           path_to = astar.path(curr_ind);
         } catch (const char *err_msg) {
           std::cerr << err_msg << std::endl;
@@ -152,7 +152,7 @@ int main() {
         curr_ind = path_to->front()->ind();
         path_from.push_back(&astar.map().boxes(curr_ind));
       }
-    }
+    }*/
 
     cnt++;
 
@@ -201,7 +201,7 @@ int main() {
                    map_ystep, map_zstep);
     }*/
     glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-    for (nav::Box *box : *path_to) {
+    for (const nav::Box *box : *path_to) {
       gl::draw_box(box->cnt().x(), box->cnt().y(), box->cnt().z(), map_xstep,
                    map_ystep, map_zstep);
     }

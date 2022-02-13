@@ -61,21 +61,11 @@ public:
   void set_pred(ASVx *pred) { pred_ = pred; }
   // Get predecessor
   ASVx *get_pred() { return pred_; }
-
-  // Reset vertex values
-  void init(float h) {
-    f_ = INF;
-    g_ = INF;
-    h_ = h;
-    pred_ = NULL;
-  };
 };
 
 // Custom comparator
 struct ASVxCmp {
-  bool operator()(const ASVx *lhs, const ASVx *rhs) const {
-    return lhs->f() < rhs->f();
-  }
+  bool operator()(ASVx *lhs, ASVx *rhs) const { return (lhs->f() < rhs->f()); }
 };
 
 } // namespace nav

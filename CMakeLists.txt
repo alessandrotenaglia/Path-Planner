@@ -29,7 +29,6 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 add_library(${PROJECT_NAME}_utils STATIC src/AStar.cpp
                                          src/Box.cpp
                                          src/Drawer.cpp
-                                         src/LPA.cpp
                                          src/Map.cpp
                                          src/Point.cpp
                                          src/Util.cpp)
@@ -53,5 +52,3 @@ target_link_libraries(view_map PRIVATE ${PROJECT_NAME}_utils)
 add_executable(astar test/astar_map.cpp)
 target_link_libraries(astar PRIVATE ${PROJECT_NAME}_utils)
 
-add_executable(lpa test/lpa_map.cpp)
-target_link_libraries(lpa PRIVATE ${PROJECT_NAME}_utils)

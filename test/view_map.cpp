@@ -118,23 +118,43 @@ int main() {
     }
     glEnd();
 
+    /*//
+    glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
+    nav::Point pnt(0.5, 2.5, 1.5);
+    for (size_t neigh : map.boxes(map.pnt_to_ind(pnt)).neighs()) {
+      gl::draw_box(map.boxes(neigh).cnt().x(), map.boxes(neigh).cnt().y(),
+                   map.boxes(neigh).cnt().z(), map_xstep, map_ystep, map_zstep);
+    }
+
+    //
+    glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
+    nav::Point link_pnt(0.5, 4.5, 1.5);
+    for (nav::WtEdge edge : map.boxes(map.pnt_to_ind(link_pnt)).edges()) {
+      gl::draw_box(
+          map.boxes(edge.first).cnt().x(), map.boxes(edge.first).cnt().y(),
+          map.boxes(edge.first).cnt().z(), map_xstep, map_ystep, map_zstep);
+    }*/
+
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     for (const nav::Box &box : map.boxes()) {
-      if (!box.free()) //(!b.inside() || !b.free())
+      if (!box.free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
     }
-    /*
-    // Links
+
+    /*// Links
+    glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     for (const nav::Box &src : map.boxes()) {
-      for (std::pair<size_t, float> edge : src.edges()) {
+      for (nav::WtEdge edge : src.edges()) {
+        if (edge.second < 0.42)
+          continue;
         nav::Box dest = map.boxes(edge.first);
         gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
                       dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }
-    }
-    */
+    }*/
+
     // Swap frames and Process Events
     pangolin::FinishFrame();
   }
