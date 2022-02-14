@@ -239,10 +239,9 @@ int main() {
 
   std::list<std::pair<nav::Point, nav::Point>> slam_obstacles;
 
-  slam_obstacles.push_back(make_obstacle(_6, _E));
-  slam_obstacles.push_back(make_obstacle(_13, _E));
-  slam_obstacles.push_back(make_obstacle(_16, _F));
-  slam_obstacles.push_back(make_obstacle(_7, _G));
+  slam_obstacles.push_back(make_obstacle(_7, _E));
+  slam_obstacles.push_back(make_obstacle(_11, _E));
+  slam_obstacles.push_back(make_obstacle(_13, _B));
 
   std::list<nav::Point> slam_pntcloud;
   for (std::pair<nav::Point, nav::Point> &obs : slam_obstacles) {

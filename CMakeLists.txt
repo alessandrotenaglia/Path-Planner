@@ -49,6 +49,8 @@ target_link_libraries(gen_map PRIVATE ${PROJECT_NAME}_utils)
 add_executable(view_map test/view_map.cpp)
 target_link_libraries(view_map PRIVATE ${PROJECT_NAME}_utils)
 
+add_executable(fibonacci test/fibonacci_heap.cpp)
+target_link_libraries(fibonacci PRIVATE ${PROJECT_NAME}_utils)
+
 add_executable(astar test/astar_map.cpp)
 target_link_libraries(astar PRIVATE ${PROJECT_NAME}_utils)
-

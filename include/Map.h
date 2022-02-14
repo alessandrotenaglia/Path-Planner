@@ -20,7 +20,6 @@
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
 #include "Box.h"
-#include "Util.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Class Definition                             */
@@ -35,7 +34,6 @@ private:
   float radius_, height_;       // Drone dimensions
   std::vector<Box> boxes_;      // Vector containing all boxes
   std::vector<bool> updatable_; // Indexes that can be updated
-  std::vector<bool> toverify_;  // Indices to be verified
   std::vector<bool> updated_;   // Updated indexes
 
   // Map serialization
@@ -43,7 +41,7 @@ private:
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &xlen_ &ylen_ &zlen_ &nx_ &ny_ &nz_ &n_ &xstep_ &ystep_ &zstep_ &radius_
-        &height_ &boxes_ &updatable_ &toverify_ &updated_;
+        &height_ &boxes_ &updatable_ &updated_;
   }
 
 public:
@@ -64,15 +62,6 @@ public:
 
   // Get ind-th box
   const Box &boxes(size_t ind) const { return boxes_[ind]; }
-
-  // Get updated box
-  const bool updated(size_t ind) const { return updated_[ind]; }
-
-  // Assign SLAM points to the respective boxes
-  void add_slam_pntcloud(std::list<Point> slam_pntcloud);
-
-  // Set SLAM obsatcles
-  void set_slam_obstacles();
 
   // Update map from SLAM pointcloud
   bool slam_update(std::list<Point> slam_pntcloud);

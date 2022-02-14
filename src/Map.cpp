@@ -21,9 +21,12 @@ namespace nav {
 Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
          float radius, float height, std::list<Point> fix_pntcloud)
     : xlen_(xlen), ylen_(ylen), zlen_(zlen), nx_(nx), ny_(ny), nz_(nz),
-      n_(nx * ny * nz), xstep_(xlen / nx), ystep_(ylen / ny), zstep_(zlen / nz),
-      radius_(radius), height_(height), boxes_(n_), updatable_(n_, true),
-      toverify_(n_, false), updated_(n_, true) {
+      n_(nx * ny * nz), radius_(radius), height_(height), boxes_(n_),
+      updatable_(n_, true), updated_(n_, false) {
+  //
+  this->xstep_ = util::round(xlen / nx);
+  this->ystep_ = util::round(ylen / ny);
+  this->zstep_ = util::round(zlen / nz);
   // Map size
   std::vector<size_t> size = {this->nx_, this->ny_, this->nz_};
   // Set the size of the surrounding
@@ -39,9 +42,10 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     idxs = util::ind_to_sub(size, ind);
     if (idxs == NULL)
       throw "ind_to_sub() on " + std::to_string(ind) + " failed!";
-    Point cnt(this->xstep_ * idxs->at(0) + this->xstep_ / 2,
-              this->ystep_ * idxs->at(1) + this->ystep_ / 2,
-              this->zstep_ * idxs->at(2) + this->zstep_ / 2);
+    float xcnt = util::round(this->xstep_ * idxs->at(0) + this->xstep_ / 2);
+    float ycnt = util::round(this->ystep_ * idxs->at(1) + this->ystep_ / 2);
+    float zcnt = util::round(this->zstep_ * idxs->at(2) + this->zstep_ / 2);
+    Point cnt(xcnt, ycnt, zcnt);
     this->boxes_[ind].set_cnt(cnt);
     // Check if the box is inside the space
     if ((0 <= cnt.x() - this->radius_ && cnt.x() + this->radius_ <= xlen_) &&
@@ -90,31 +94,39 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     // Set links
     for (size_t link : *links) {
       if (this->boxes_[link].free() && this->boxes_[link].in()) {
-        float wt = this->boxes_[ind].cnt().dist(this->boxes_[link].cnt());
-        this->boxes_[ind].add_edge(link, wt);
+        this->boxes_[ind].add_edge(
+            link, this->boxes_[ind].cnt().dist(this->boxes_[link].cnt()));
       }
     }
   }
 }
 
-// Assign SLAM points to the respective boxes
-void Map::add_slam_pntcloud(std::list<Point> slam_pntcloud) {
+// Update map from SLAM pointcloud
+bool Map::slam_update(std::list<Point> slam_pntcloud) {
+  //
+  std::vector<bool> old_status = this->updatable_;
+  for (size_t ind = 0; ind < this->n_; ind++) {
+    if (this->updatable_[ind]) {
+      old_status[ind] = this->boxes(ind).free();
+      // this->boxes_[ind].remove_slam_pnts();
+      // this->boxes_[ind].set_free(true);
+    }
+  }
+  // Assign SLAM points to the respective boxes
+  std::vector<bool> toverify(this->n_, false);
   for (const Point &pnt : slam_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
     if (ind < this->n_ && this->updatable_[ind]) {
       this->boxes_[ind].add_slam_pnt(pnt);
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
-        this->toverify_[ind_neigh] = this->updatable_[ind_neigh];
+        toverify[ind_neigh] = this->updatable_[ind_neigh];
       }
     }
   }
-}
-
-// Set SLAM obsatcles
-void Map::set_slam_obstacles() {
-  // Loop on boxes
+  // Set SLAM obsatcles
+  std::vector<bool> new_status = this->updatable_;
   for (size_t ind = 0; ind < this->n_; ind++) {
-    if (this->toverify_[ind]) {
+    if (toverify[ind]) {
       size_t count = 0;
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
         for (const Point &pnt : this->boxes_[ind_neigh].slam_pnts()) {
@@ -123,34 +135,17 @@ void Map::set_slam_obstacles() {
             count++;
           if (count > 0) {
             this->boxes_[ind].set_free(false);
-            this->updated_[ind] = true;
+            new_status[ind] = false;
             break;
           }
         }
         if (count > 0)
           break;
       }
-      this->toverify_[ind] = false;
     }
   }
-}
-
-// Update map from SLAM pointcloud
-bool Map::slam_update(std::list<Point> slam_pntcloud) {
   //
-  std::vector<bool> old = this->updated_;
-  //
-  for (size_t ind = 0; ind < this->n_; ind++) {
-    this->boxes_[ind].set_free(this->updatable_[ind]);
-    this->updated_[ind] = false;
-    this->boxes_[ind].remove_slam_pnts();
-  }
-  // Assign SLAM points to the respective boxes
-  this->add_slam_pntcloud(slam_pntcloud);
-  // Set SLAM obsatcles
-  this->set_slam_obstacles();
-  //
-  return this->updated_ == old;
+  return new_status != old_status;
 }
 
 // Compute the index of the corresponding box

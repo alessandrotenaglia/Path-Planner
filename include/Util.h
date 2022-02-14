@@ -39,6 +39,9 @@ std::vector<size_t> *find_neighs(std::vector<size_t> &size, size_t ind,
 // Given a certain index find its links
 std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind);
 
+// Round a float
+float round(float val);
+
 } // namespace util
 
 #endif /* UTIL_H */

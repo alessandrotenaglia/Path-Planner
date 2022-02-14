@@ -27,8 +27,8 @@ class AStar {
 private:
   Map map_;               // Map
   std::vector<ASVx> vxs_; // Vertices
-  ASVx *str_;             // Start vertex
-  ASVx *trg_;             // Target vertex
+  size_t str_;            // Start vertex
+  size_t trg_;            // Target vertex
 
 public:
   // Default constructor
@@ -45,12 +45,12 @@ public:
   // Set start vertex from index
   void set_str(size_t str_ind);
   // Get start vertex
-  ASVx *str() { return str_; };
+  size_t str() { return str_; };
 
   // Set target vertex
   void set_trg(const Point &trg_pnt);
   // Get target vertex
-  ASVx *trg() { return trg_; };
+  size_t trg() { return trg_; };
 
   // Get path
   std::list<const Box *> *path(size_t curr_ind);

@@ -26,12 +26,12 @@ void Point::set(float x, float y, float z) {
 float Point::dist_xy(const Point &other) const {
   float dx = other.x() - this->x();
   float dy = other.y() - this->y();
-  return sqrt((dx * dx) + (dy * dy));
+  return util::round(sqrt((dx * dx) + (dy * dy)));
 }
 
 // Compute the difference of heights between two points
 float Point::dist_z(const Point &other) const {
-  return abs(other.z() - this->z());
+  return util::round(abs(other.z() - this->z()));
 }
 
 // Compute Euclidean distance between two points
@@ -39,14 +39,14 @@ float Point::dist(const Point &other) const {
   float dx = other.x() - this->x();
   float dy = other.y() - this->y();
   float dz = other.z() - this->z();
-  return sqrt((dx * dx) + (dy * dy) + (dz * dz));
+  return util::round(sqrt((dx * dx) + (dy * dy) + (dz * dz)));
 }
 
 // Compute the angle between two points
 float Point::angle_xy(const Point &other) const {
   float dx = other.x() - this->x();
   float dy = other.y() - this->y();
-  return atan2(dy, dx);
+  return util::round(atan2(dy, dx));
 }
 
 // Check if two points are equals

@@ -17,6 +17,7 @@
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
+#include "Util.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Class Definition                             */
@@ -27,15 +28,15 @@ namespace nav {
 
 class ASVx {
 private:
-  size_t ind_; // Linear index
-  float f_;    // Priority value
-  float g_;    // Cost to vertex
-  float h_;    // Heuristic to target
-  ASVx *pred_; // Predecessor
+  size_t ind_;  // Linear index
+  float f_;     // Priority value
+  float g_;     // Cost to vertex
+  float h_;     // Heuristic to target
+  size_t pred_; // Predecessor
 
 public:
   // Default constructor
-  ASVx() : ind_(-1), f_(INF), g_(INF), h_(INF), pred_(NULL){};
+  ASVx() : ind_(-1), f_(INF), g_(INF), h_(INF), pred_(-1){};
 
   // Set box ind
   void set_ind(size_t ind) { ind_ = ind; }
@@ -43,7 +44,7 @@ public:
   const size_t &ind() const { return ind_; }
 
   // Set f value
-  void set_f(float f) { f_ = f; }
+  void set_f() { f_ = g_ + h_; }
   // Get f value
   const float &f() const { return f_; }
 
@@ -58,14 +59,16 @@ public:
   const float &h() const { return h_; }
 
   // Set predecessor
-  void set_pred(ASVx *pred) { pred_ = pred; }
+  void set_pred(size_t pred) { pred_ = pred; }
   // Get predecessor
-  ASVx *get_pred() { return pred_; }
+  size_t pred() { return pred_; }
 };
 
 // Custom comparator
 struct ASVxCmp {
-  bool operator()(ASVx *lhs, ASVx *rhs) const { return (lhs->f() < rhs->f()); }
+  bool operator()(ASVx *lhs, ASVx *rhs) const {
+    return (lhs->f() < rhs->f());
+  }
 };
 
 } // namespace nav
