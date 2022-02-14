@@ -34,14 +34,13 @@ private:
   float radius_, height_;       // Drone dimensions
   std::vector<Box> boxes_;      // Vector containing all boxes
   std::vector<bool> updatable_; // Indexes that can be updated
-  std::vector<bool> updated_;   // Updated indexes
 
   // Map serialization
   friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &xlen_ &ylen_ &zlen_ &nx_ &ny_ &nz_ &n_ &xstep_ &ystep_ &zstep_ &radius_
-        &height_ &boxes_ &updatable_ &updated_;
+        &height_ &boxes_ &updatable_;
   }
 
 public:
@@ -64,7 +63,7 @@ public:
   const Box &boxes(size_t ind) const { return boxes_[ind]; }
 
   // Update map from SLAM pointcloud
-  bool slam_update(std::list<Point> slam_pntcloud);
+  std::list<size_t> slam_update(std::list<Point> slam_pntcloud);
 
   // Compute the index of the corresponding box
   size_t pnt_to_ind(const Point &pnt);

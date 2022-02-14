@@ -22,7 +22,7 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
          float radius, float height, std::list<Point> fix_pntcloud)
     : xlen_(xlen), ylen_(ylen), zlen_(zlen), nx_(nx), ny_(ny), nz_(nz),
       n_(nx * ny * nz), radius_(radius), height_(height), boxes_(n_),
-      updatable_(n_, true), updated_(n_, false) {
+      updatable_(n_, true) {
   //
   this->xstep_ = util::round(xlen / nx);
   this->ystep_ = util::round(ylen / ny);
@@ -102,21 +102,12 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
 }
 
 // Update map from SLAM pointcloud
-bool Map::slam_update(std::list<Point> slam_pntcloud) {
-  //
-  std::vector<bool> old_status = this->updatable_;
-  for (size_t ind = 0; ind < this->n_; ind++) {
-    if (this->updatable_[ind]) {
-      old_status[ind] = this->boxes(ind).free();
-      // this->boxes_[ind].remove_slam_pnts();
-      // this->boxes_[ind].set_free(true);
-    }
-  }
+std::list<size_t> Map::slam_update(std::list<Point> slam_pntcloud) {
   // Assign SLAM points to the respective boxes
   std::vector<bool> toverify(this->n_, false);
   for (const Point &pnt : slam_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
-    if (ind < this->n_ && this->updatable_[ind]) {
+    if (ind < this->n_ && this->updatable_[ind] && this->boxes_[ind].free()) {
       this->boxes_[ind].add_slam_pnt(pnt);
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
         toverify[ind_neigh] = this->updatable_[ind_neigh];
@@ -124,7 +115,7 @@ bool Map::slam_update(std::list<Point> slam_pntcloud) {
     }
   }
   // Set SLAM obsatcles
-  std::vector<bool> new_status = this->updatable_;
+  std::list<size_t> updated;
   for (size_t ind = 0; ind < this->n_; ind++) {
     if (toverify[ind]) {
       size_t count = 0;
@@ -134,8 +125,9 @@ bool Map::slam_update(std::list<Point> slam_pntcloud) {
               this->boxes_[ind].cnt().dist_z(pnt) <= this->height_)
             count++;
           if (count > 0) {
+            if (this->boxes_[ind].free())
+              updated.push_back(ind);
             this->boxes_[ind].set_free(false);
-            new_status[ind] = false;
             break;
           }
         }
@@ -145,7 +137,7 @@ bool Map::slam_update(std::list<Point> slam_pntcloud) {
     }
   }
   //
-  return new_status != old_status;
+  return updated;
 }
 
 // Compute the index of the corresponding box
