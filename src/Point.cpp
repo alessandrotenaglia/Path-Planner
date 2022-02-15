@@ -49,6 +49,29 @@ float Point::angle_xy(const Point &other) const {
   return util::round(atan2(dy, dx));
 }
 
+// Rotate point of theta on xy-axis
+void Point::rotate_xy(float theta) {
+  float xtemp = cos(theta) * this->x_ - sin(theta) * this->y_;
+  float ytemp = sin(theta) * this->x_ + cos(theta) * this->y_;
+  this->x_ = xtemp;
+  this->y_ = ytemp;
+}
+
+// Check if the point is inside a box, defined by SudEstDown and
+// NordOvestUp boundaries
+bool Point::is_inside(std::vector<Point> &points) {
+  bool res = false;
+  for (size_t i = 0, j = points.size() - 1; i < points.size(); j = i++) {
+    if (((points[i].y() >= this->y_) != (points[j].y() >= this->y_)) &&
+        (this->x_ <= (points[j].x() - points[i].x()) * (y_ - points[i].y()) /
+                             (points[j].y() - points[i].y()) +
+                         points[i].x())) {
+      res = !res;
+    }
+  }
+  return res;
+}
+
 // Check if two points are equals
 bool Point::operator==(const Point &other) {
   return ((this->x_ == other.x()) & (this->y_ == other.y()) &

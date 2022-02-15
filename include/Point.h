@@ -78,6 +78,13 @@ public:
   // Compute the angle between two points
   float angle_xy(const Point &other) const;
 
+  // Rotate point of theta on xy-axis
+  void rotate_xy(float theta);
+
+  // Check if the point is inside a box, defined by SudEstDown and
+  // NordOvestUp boundaries
+  bool is_inside(std::vector<Point> &bounds);
+
   // Check if two points are equals
   bool operator==(const Point &other);
 

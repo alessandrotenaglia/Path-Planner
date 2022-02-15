@@ -107,7 +107,8 @@ std::list<size_t> Map::slam_update(std::list<Point> slam_pntcloud) {
   std::vector<bool> toverify(this->n_, false);
   for (const Point &pnt : slam_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
-    if (ind < this->n_ && this->updatable_[ind] && this->boxes_[ind].free()) {
+    if (ind < this->n_ &&
+        this->updatable_[ind]) { // && this->boxes_[ind].free()) {
       this->boxes_[ind].add_slam_pnt(pnt);
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
         toverify[ind_neigh] = this->updatable_[ind_neigh];
