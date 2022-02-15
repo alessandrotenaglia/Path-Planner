@@ -107,7 +107,7 @@ int main() {
   size_t curr_ind = path_to->front()->ind();
   size_t curr_dir = 0;
   size_t cnt = 0;
-  size_t fps = 50;
+  size_t fps = 10;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -184,12 +184,12 @@ int main() {
     glEnd();
 
     // Boxes
-    /*glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
+    glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     for (const nav::Box &box : astar.map().boxes()) {
       if (!box.free()) //(!b.inside() || !b.free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
-    }*/
+    }
 
     // Path
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
