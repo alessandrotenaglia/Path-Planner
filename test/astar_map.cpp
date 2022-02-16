@@ -66,12 +66,17 @@ int main() {
     ia >> map;
   }
   nav::AStar astar(map);
-
   std::list<nav::Point> slam_pntcloud;
   {
     std::ifstream ifs("../data/slam_pntcloud.dat");
     boost::archive::binary_iarchive ia(ifs);
     ia >> slam_pntcloud;
+  }
+  std::list<nav::Point> total_pntcloud;
+  {
+    std::ifstream ifs("../data/total_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> total_pntcloud;
   }
 
   nav::Point str_pnt(17.5, 4.5, 1.5);
@@ -89,11 +94,12 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  size_t curr_ind = astar.str();
-  size_t next_ind;
+  size_t curr_ind = astar.str(), next_ind;
+  nav::Point curr_pnt, next_pnt;
   double yaw;
   size_t cnt = 0;
-  size_t fps = 1;
+  size_t fps = 100;
+  nav::Point p1, p2, p3, p4, p5, p6;
   std::vector<nav::Point> bounds;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
@@ -127,25 +133,27 @@ int main() {
     if ((cnt % fps) == 0) {
       if (curr_ind != astar.trg()) {
         try {
+          curr_ind = astar.str();
+          curr_pnt = astar.map().boxes(curr_ind).cnt();
           next_ind = astar.path().front();
-          yaw = astar.map().boxes(curr_ind).cnt().angle_xy(
-              astar.map().boxes(next_ind).cnt());
-          std::cout << astar.map().boxes(curr_ind).cnt() << " -> "
-                    << astar.map().boxes(next_ind).cnt() << " : " << yaw
+          next_pnt = astar.map().boxes(next_ind).cnt();
+          if ((curr_pnt.x() != next_pnt.x()) || (curr_pnt.y() != next_pnt.y()))
+            yaw = curr_pnt.angle_xy(next_pnt);
+          std::cout << curr_pnt << " -> " << next_pnt << " : " << yaw
                     << std::endl;
           //
-          nav::Point curr_pnt = astar.map().boxes(curr_ind).cnt();
-          nav::Point p1(curr_pnt.x() - 1.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
-          nav::Point p2(curr_pnt.x() + 3.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
-          nav::Point p3(curr_pnt.x() + 3.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
-          nav::Point p4(curr_pnt.x() - 1.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          p1.set(curr_pnt.x() - 1.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
+          p1.rotate_xy(curr_pnt, yaw);
+          p2.set(curr_pnt.x() + 3.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
+          p2.rotate_xy(curr_pnt, yaw);
+          p3.set(curr_pnt.x() + 3.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          p3.rotate_xy(curr_pnt, yaw);
+          p4.set(curr_pnt.x() - 1.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          p4.rotate_xy(curr_pnt, yaw);
           bounds = {p1, p2, p3, p4};
-          for (nav::Point &pnt : bounds) {
-            pnt.rotate_xy(curr_pnt, yaw);
-          }
           std::list<nav::Point> pntcloud;
-          for (nav::Point &pnt : slam_pntcloud) {
-            if (pnt.is_inside(bounds) && abs(pnt.z() - curr_pnt.z()) < 1.0f)
+          for (nav::Point &pnt : total_pntcloud) {
+            if (pnt.is_inside_xy(bounds) && abs(curr_pnt.z() - pnt.z()) <= 1.0f)
               pntcloud.push_back(pnt);
           }
           //
@@ -186,23 +194,16 @@ int main() {
     glEnd();
 
     // Boxes
-    /*glColor4f(0.2f, 0.2f, 0.2f, 0.05f);
+    glColor4f(0.2f, 0.2f, 0.2f, 0.05f);
     for (const nav::Box &box : astar.map().boxes()) {
       if (!box.free()) //(!b.inside() || !b.free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
-    }*/
+    }
 
     //
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
-    gl::draw_link(bounds[0].x(), bounds[0].y(), bounds[0].z(), bounds[1].x(),
-                  bounds[1].y(), bounds[1].z());
-    gl::draw_link(bounds[1].x(), bounds[1].y(), bounds[1].z(), bounds[2].x(),
-                  bounds[2].y(), bounds[2].z());
-    gl::draw_link(bounds[2].x(), bounds[2].y(), bounds[2].z(), bounds[3].x(),
-                  bounds[3].y(), bounds[3].z());
-    gl::draw_link(bounds[3].x(), bounds[3].y(), bounds[3].z(), bounds[0].x(),
-                  bounds[0].y(), bounds[0].z());
+    gl::draw_polyhedron(p1, p2, p3, p4, 1.0f);
 
     // Path
     if (curr_ind != astar.trg()) {
@@ -225,7 +226,7 @@ int main() {
       }
     }
 
-    if ((cnt % fps) == 0) {
+    if ((cnt % fps) == (fps / 2)) {
       if (curr_ind != astar.trg()) {
         try {
           path_from.push_back(curr_ind);

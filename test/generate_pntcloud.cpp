@@ -260,5 +260,26 @@ int main() {
     oa << slam_pntcloud;
   }
 
+  std::list<nav::Point> total_pntcloud;
+  std::list<std::pair<nav::Point, nav::Point>> total_obstacles;
+  for (std::pair<nav::Point, nav::Point> fix : fix_obstacles)
+    total_obstacles.push_back(fix);
+  for (std::pair<nav::Point, nav::Point> slam : slam_obstacles)
+    total_obstacles.push_back(slam);
+  for (std::pair<nav::Point, nav::Point> &obs : total_obstacles) {
+    for (float x = obs.first.x(); x < obs.second.x(); x = x + 0.1f) {
+      for (float y = obs.first.y(); y < obs.second.y(); y = y + 0.1f) {
+        for (float z = obs.first.z(); z < obs.second.z(); z = z + 0.1f) {
+          nav::Point pnt(x, y, z);
+          total_pntcloud.push_back(pnt);
+        }
+      }
+    }
+  }
+  {
+    std::ofstream ofs("../data/total_pntcloud.dat");
+    boost::archive::binary_oarchive oa(ofs);
+    oa << total_pntcloud;
+  }
   return 0;
 }

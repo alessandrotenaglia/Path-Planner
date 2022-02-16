@@ -11,6 +11,7 @@
 /*---------------------------------------------------------------------------*/
 /*                          Standard header includes                         */
 /*---------------------------------------------------------------------------*/
+#include "Point.h"
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <cmath>
@@ -39,6 +40,9 @@ void draw_link(float xs, float ys, float zs, float xt, float yt, float zt);
 void draw_circle(float radius);
 
 void draw_cylinder(float x, float y, float z, float radius, float height);
+
+void draw_polyhedron(const nav::Point &p1, const nav::Point &p2,
+                     const nav::Point &p3, const nav::Point &p4, float height);
 
 } // namespace gl
 

@@ -55,11 +55,11 @@ int main() {
   double window_ystart = (double)window_cfg["ystart"];
 
   std::list<nav::Point> fix_pntcloud;
-  {
+  /*{
     std::ifstream ifs("../data/fix_pntcloud.dat");
     boost::archive::binary_iarchive ia(ifs);
     ia >> fix_pntcloud;
-  }
+  }*/
 
   nav::Map map;
   try {

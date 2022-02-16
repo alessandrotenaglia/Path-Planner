@@ -58,17 +58,9 @@ void AStar::set_trg(const Point &trg_pnt) {
   // Set target vertex
   this->trg_ = trg_ind;
   // Initialize vertices
-  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
-    this->vxs_[ind].set_g(INF);
-    if (this->map_.boxes(ind).free() && this->map_.boxes(ind).in()) {
-      this->vxs_[ind].set_h(
-          this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
-    } else {
-      this->vxs_[ind].set_h(INF);
-    }
-    this->vxs_[ind].set_f();
-    this->vxs_[ind].set_pred(-1);
-  }
+  for (ASVertex &vx : this->vxs_)
+    vx.set_h(this->map_.boxes(vx.ind()).cnt().dist(
+        this->map_.boxes(this->trg_).cnt()));
 }
 
 // Set path
@@ -84,10 +76,13 @@ void AStar::set_path() {
 // Compute shortest path
 void AStar::compute_shortest_path() {
   // Initialize vertices
-  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
-    this->vxs_[ind].set_g(INF);
-    this->vxs_[ind].set_f();
-    this->vxs_[ind].set_pred(-1);
+  for (ASVertex &vx : this->vxs_) {
+    vx.set_g(INF);
+    if (!this->map_.boxes(vx.ind()).free() ||
+        !!this->map_.boxes(vx.ind()).free())
+      vx.set_h(INF);
+    vx.set_f();
+    vx.set_pred(-1);
   }
   // Initialize OPEN and close set
   FibonacciHeap<ASNode> OPEN;
@@ -113,10 +108,11 @@ void AStar::compute_shortest_path() {
       // Check if the vertex is in the OPEN set
       node<ASNode> *temp =
           OPEN.find(ASNode(edge.first, this->vxs_[edge.first].f()));
+      bool in_OPEN = (temp != NULL);
       // Check if the vertex is in the CLOSED set
       bool in_CLOSED = (CLOSED.find(edge.first) != CLOSED.end());
       //
-      if (temp == NULL && !in_CLOSED) {
+      if (!in_OPEN && !in_CLOSED) {
         this->vxs_[edge.first].set_g(g_score);
         this->vxs_[edge.first].set_f();
         this->vxs_[edge.first].set_pred(curr.ind());
@@ -126,7 +122,7 @@ void AStar::compute_shortest_path() {
           this->vxs_[edge.first].set_g(g_score);
           this->vxs_[edge.first].set_f();
           this->vxs_[edge.first].set_pred(curr.ind());
-          if (temp != NULL) {
+          if (in_OPEN) {
             OPEN.decreaseKey(temp, ASNode(this->vxs_[edge.first].ind(),
                                           this->vxs_[edge.first].f()));
           }
@@ -144,19 +140,14 @@ void AStar::compute_shortest_path() {
 
 // Update map with SLAM pointcloud,
 void AStar::update(std::list<Point> slam_pntcloud) {
-  std::list<size_t> updated = this->map_.slam_update(slam_pntcloud);
+  this->map_.slam_update(slam_pntcloud);
   bool flag = false;
-  for (size_t ind : updated) {
-    if (std::find(this->path_.begin(), this->path_.end(), ind) !=
-        this->path_.end()) {
+  for (size_t ind : this->path_)
+    if (!this->map().boxes(ind).free()) {
       flag = true;
       break;
     }
-  }
   if (flag) {
-    for (size_t ind : updated) {
-      this->vxs_[ind].set_h(INF);
-    }
     this->compute_shortest_path();
   }
 }

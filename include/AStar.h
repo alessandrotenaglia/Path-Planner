@@ -22,8 +22,6 @@
 /*---------------------------------------------------------------------------*/
 namespace nav {
 
-#define INF std::numeric_limits<float>::max()
-
 class ASNode {
 private:
   size_t ind_; // Linear index
@@ -55,7 +53,7 @@ public:
   // Operator ==
   bool operator==(ASNode rhs) const { return (this->f() == rhs.f()); }
 
-  // Convert a point in string form
+  // Convert a ASNode in string form
   friend std::ostream &operator<<(std::ostream &os, const ASNode &vx) {
     os << "[ind: " << vx.ind() << "; f: " << vx.f() << "]";
     return os;
@@ -99,14 +97,14 @@ public:
   // Get predecessor
   size_t pred() { return pred_; }
 
-  // Operator >
+  /*// Operator >
   bool operator>(ASVertex *rhs) const { return (this->f() > rhs->f()); }
 
   // Operator <
   bool operator<(ASVertex *rhs) const { return (this->f() < rhs->f()); }
 
   // Operator ==
-  bool operator==(ASVertex *rhs) const { return (this->f() == rhs->f()); }
+  bool operator==(ASVertex *rhs) const { return (this->f() == rhs->f()); }*/
 
   // Convert a point in string form
   friend std::ostream &operator<<(std::ostream &os, const ASVertex &vx) {
@@ -121,7 +119,7 @@ private:
   std::vector<ASVertex> vxs_; // Vertices
   size_t str_;                // Start vertex
   size_t trg_;                // Target vertex
-  std::list<size_t> path_;    //
+  std::list<size_t> path_;    // Path
 
 public:
   // Default constructor

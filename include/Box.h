@@ -65,7 +65,8 @@ public:
   const bool &in() const { return in_; }
 
   // Set free
-  void set_free(bool free) { free_ = free; }
+  void set_free() { free_ = true; }
+  void set_busy() { free_ = false; }
   // Get free
   const bool &free() const { return free_; }
 
@@ -90,7 +91,7 @@ public:
   void add_edge(size_t dest, float wt) {
     edges_.push_back(std::make_pair(dest, wt));
   }
-  // Get edges with neighbors
+  // Get edges
   const std::vector<WtEdge> &edges() const { return edges_; }
 
   // Convert a box in string form

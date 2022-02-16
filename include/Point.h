@@ -14,6 +14,7 @@
 #include <boost/serialization/set.hpp>
 #include <cmath>
 #include <iostream>
+#include <limits>
 
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
@@ -24,6 +25,8 @@
 /*                              Class Definition                             */
 /*---------------------------------------------------------------------------*/
 namespace nav {
+
+#define INF std::numeric_limits<float>::max()
 
 class Point {
 private:
@@ -83,7 +86,7 @@ public:
 
   // Check if the point is inside a box, defined by SudEstDown and
   // NordOvestUp boundaries
-  bool is_inside(std::vector<Point> &bounds);
+  bool is_inside_xy(std::vector<Point> &points);
 
   // Check if two points are equals
   bool operator==(const Point &other);

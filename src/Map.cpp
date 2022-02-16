@@ -24,9 +24,9 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
       n_(nx * ny * nz), radius_(radius), height_(height), boxes_(n_),
       updatable_(n_, true) {
   //
-  this->xstep_ = util::round(xlen / nx);
-  this->ystep_ = util::round(ylen / ny);
-  this->zstep_ = util::round(zlen / nz);
+  this->xstep_ = util::round(xlen / (float)nx);
+  this->ystep_ = util::round(ylen / (float)ny);
+  this->zstep_ = util::round(zlen / (float)nz);
   // Map size
   std::vector<size_t> size = {this->nx_, this->ny_, this->nz_};
   // Set the size of the surrounding
@@ -42,9 +42,9 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     idxs = util::ind_to_sub(size, ind);
     if (idxs == NULL)
       throw "ind_to_sub() on " + std::to_string(ind) + " failed!";
-    float xcnt = util::round(this->xstep_ * idxs->at(0) + this->xstep_ / 2);
-    float ycnt = util::round(this->ystep_ * idxs->at(1) + this->ystep_ / 2);
-    float zcnt = util::round(this->zstep_ * idxs->at(2) + this->zstep_ / 2);
+    float xcnt = util::round((this->xstep_ * idxs->at(0)) + this->xstep_ / 2);
+    float ycnt = util::round((this->ystep_ * idxs->at(1)) + this->ystep_ / 2);
+    float zcnt = util::round((this->zstep_ * idxs->at(2)) + this->zstep_ / 2);
     Point cnt(xcnt, ycnt, zcnt);
     this->boxes_[ind].set_cnt(cnt);
     // Check if the box is inside the space
@@ -73,7 +73,7 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
             this->boxes_[ind].cnt().dist_z(pnt) <= this->height_)
           count++;
         if (count > 0) {
-          this->boxes_[ind].set_free(false);
+          this->boxes_[ind].set_busy();
           this->updatable_[ind] = false;
           break;
         }
@@ -107,8 +107,7 @@ std::list<size_t> Map::slam_update(std::list<Point> slam_pntcloud) {
   std::vector<bool> toverify(this->n_, false);
   for (const Point &pnt : slam_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
-    if (ind < this->n_ &&
-        this->updatable_[ind]) { // && this->boxes_[ind].free()) {
+    if (ind < this->n_ && this->updatable_[ind]) {
       this->boxes_[ind].add_slam_pnt(pnt);
       for (size_t ind_neigh : this->boxes_[ind].neighs()) {
         toverify[ind_neigh] = this->updatable_[ind_neigh];
@@ -128,7 +127,7 @@ std::list<size_t> Map::slam_update(std::list<Point> slam_pntcloud) {
           if (count > 0) {
             if (this->boxes_[ind].free())
               updated.push_back(ind);
-            this->boxes_[ind].set_free(false);
+            this->boxes_[ind].set_busy();
             break;
           }
         }
@@ -137,7 +136,6 @@ std::list<size_t> Map::slam_update(std::list<Point> slam_pntcloud) {
       }
     }
   }
-  //
   return updated;
 }
 

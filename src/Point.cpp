@@ -51,21 +51,21 @@ float Point::angle_xy(const Point &other) const {
 
 // Rotate point of theta on xy-axis
 void Point::rotate_xy(const Point &cnt, float theta) {
-  float xtemp =
-      cos(theta) * (this->x_ - cnt.x()) - sin(theta) * (this->y_ - cnt.y());
-  float ytemp =
-      sin(theta) * (this->x_ - cnt.x()) + cos(theta) * (this->y_ - cnt.y());
-  this->x_ = xtemp + cnt.x();
-  this->y_ = ytemp + cnt.y();
+  float xtemp = this->x_ - cnt.x();
+  float ytemp = this->y_ - cnt.y();
+  this->x_ =
+      util::round(((cos(theta) * xtemp) - (sin(theta) * ytemp)) + cnt.x());
+  this->y_ =
+      util::round(((sin(theta) * xtemp) + (cos(theta) * ytemp)) + cnt.y());
 }
 
-// Check if the point is inside a box, defined by SudEstDown and
-// NordOvestUp boundaries
-bool Point::is_inside(std::vector<Point> &points) {
+// Check if the point is inside a box
+bool Point::is_inside_xy(std::vector<Point> &points) {
   bool res = false;
   for (size_t i = 0, j = points.size() - 1; i < points.size(); j = i++) {
     if (((points[i].y() >= this->y_) != (points[j].y() >= this->y_)) &&
-        (this->x_ <= (points[j].x() - points[i].x()) * (y_ - points[i].y()) /
+        (this->x_ <= (points[j].x() - points[i].x()) *
+                             (this->y_ - points[i].y()) /
                              (points[j].y() - points[i].y()) +
                          points[i].x())) {
       res = !res;

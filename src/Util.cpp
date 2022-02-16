@@ -116,9 +116,4 @@ std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind) {
   return links;
 }
 
-float round(float val) {
-  float value = (int)(val * 100000);
-  return (float)value / 100000;
-}
-
 } // namespace util

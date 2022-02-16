@@ -40,7 +40,10 @@ std::vector<size_t> *find_neighs(std::vector<size_t> &size, size_t ind,
 std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind);
 
 // Round a float
-float round(float val);
+static inline __attribute__((always_inline)) float round(float val) {
+  float value = (int)(val * 100000);
+  return val; //(float)value / 100000;
+};
 
 } // namespace util
 
