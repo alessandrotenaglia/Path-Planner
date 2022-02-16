@@ -27,6 +27,7 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 
 # Create a shared library with common source files.
 add_library(${PROJECT_NAME}_utils STATIC src/AStar.cpp
+                                         src/LPAStar.cpp
                                          src/Box.cpp
                                          src/Drawer.cpp
                                          src/Map.cpp

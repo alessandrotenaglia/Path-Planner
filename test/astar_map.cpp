@@ -79,8 +79,8 @@ int main() {
     ia >> total_pntcloud;
   }
 
-  nav::Point str_pnt(17.5, 4.5, 1.5);
-  nav::Point trg_pnt(2.5, 2.5, 1.5);
+  nav::Point trg_pnt(17.5, 4.5, 1.5);
+  nav::Point str_pnt(2.5, 2.5, 1.5);
 
   std::list<size_t> path_from;
   std::list<size_t> path_to;
