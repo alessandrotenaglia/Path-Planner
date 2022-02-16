@@ -136,9 +136,9 @@ int main() {
     }*/
 
     // Boxes
-    glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
+    glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
     for (const nav::Box &box : map.boxes()) {
-      if (!box.free())
+      if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
     }
