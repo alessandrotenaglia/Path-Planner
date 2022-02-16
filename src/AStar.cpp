@@ -71,17 +71,14 @@ void AStar::set_trg(const Point &trg_pnt) {
   }
 }
 
-// Get path
-std::list<const Box *> *AStar::path(size_t curr_ind) {
-  auto *path = new std::list<const Box *>;
+// Set path
+void AStar::set_path() {
+  this->path_.clear();
   size_t ind = this->trg_;
-  while (ind != curr_ind) {
-    path->push_front(&this->map_.boxes(ind));
+  while (ind != this->str_) {
+    this->path_.push_front(ind);
     ind = this->vxs_[ind].pred();
-    if (ind == -1)
-      throw "ERROR: No path found";
   }
-  return path;
 }
 
 // Compute shortest path
@@ -106,6 +103,7 @@ void AStar::compute_shortest_path() {
     CLOSED.insert(curr.ind());
     // Check if the target has been reached
     if (curr.ind() == this->trg_) {
+      this->set_path();
       return;
     }
     // Loop on edges
@@ -145,13 +143,20 @@ void AStar::compute_shortest_path() {
 }
 
 // Update map with SLAM pointcloud,
-void AStar::update(size_t curr_ind, std::list<Point> slam_pntcloud) {
+void AStar::update(std::list<Point> slam_pntcloud) {
   std::list<size_t> updated = this->map_.slam_update(slam_pntcloud);
-  if (!updated.empty()) {
+  bool flag = false;
+  for (size_t ind : updated) {
+    if (std::find(this->path_.begin(), this->path_.end(), ind) !=
+        this->path_.end()) {
+      flag = true;
+      break;
+    }
+  }
+  if (flag) {
     for (size_t ind : updated) {
       this->vxs_[ind].set_h(INF);
     }
-    this->set_str(curr_ind);
     this->compute_shortest_path();
   }
 }

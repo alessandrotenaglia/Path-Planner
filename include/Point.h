@@ -79,7 +79,7 @@ public:
   float angle_xy(const Point &other) const;
 
   // Rotate point of theta on xy-axis
-  void rotate_xy(float theta);
+  void rotate_xy(const Point &cnt, float theta);
 
   // Check if the point is inside a box, defined by SudEstDown and
   // NordOvestUp boundaries

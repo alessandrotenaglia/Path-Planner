@@ -28,20 +28,6 @@
 int main() {
   std::cout << "Il godo..." << std::endl;
 
-  float yaw = 0.0;
-  nav::Point p1(0.0f, 0.0f, 0.0f);
-  p1.rotate_xy(yaw);
-  nav::Point p2(1.0f, 0.0f, 0.0f);
-  p2.rotate_xy(yaw);
-  nav::Point p3(1.0f, 1.0f, 0.0f);
-  p3.rotate_xy(yaw);
-  nav::Point p4(0.0f, 1.0f, 0.0f);
-  p4.rotate_xy(yaw);
-  std::vector<nav::Point> bounds = {p1, p2, p3, p4};
-  nav::Point pnt(0.5, 0.5, 0.0);
-  std::cout << pnt << std::endl;
-  std::cout << pnt.is_inside(bounds) << std::endl;
-
   // Load config file
   cv::FileStorage fs;
   fs.open("../config/map_config.yaml", cv::FileStorage::READ);

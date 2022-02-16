@@ -50,11 +50,13 @@ float Point::angle_xy(const Point &other) const {
 }
 
 // Rotate point of theta on xy-axis
-void Point::rotate_xy(float theta) {
-  float xtemp = cos(theta) * this->x_ - sin(theta) * this->y_;
-  float ytemp = sin(theta) * this->x_ + cos(theta) * this->y_;
-  this->x_ = xtemp;
-  this->y_ = ytemp;
+void Point::rotate_xy(const Point &cnt, float theta) {
+  float xtemp =
+      cos(theta) * (this->x_ - cnt.x()) - sin(theta) * (this->y_ - cnt.y());
+  float ytemp =
+      sin(theta) * (this->x_ - cnt.x()) + cos(theta) * (this->y_ - cnt.y());
+  this->x_ = xtemp + cnt.x();
+  this->y_ = ytemp + cnt.y();
 }
 
 // Check if the point is inside a box, defined by SudEstDown and

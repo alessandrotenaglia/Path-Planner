@@ -25,33 +25,6 @@
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
 /*---------------------------------------------------------------------------*/
-std::list<nav::Point> get_pntcloud(nav::AStar astar, size_t curr_ind, float yaw,
-                                   std::list<nav::Point> slam_pntcloud) {
-  float right_dist = 1.0f;
-  float left_dist = 1.0f;
-  float front_dist = 3.0f;
-  float back_dist = 1.0f;
-  nav::Point curr_pnt = astar.map().boxes(curr_ind).cnt();
-  nav::Point p1(curr_pnt.x() - back_dist, curr_pnt.y() - right_dist,
-                curr_pnt.z());
-  p1.rotate_xy(yaw);
-  nav::Point p2(curr_pnt.x() + front_dist, curr_pnt.y() - right_dist,
-                curr_pnt.z());
-  p2.rotate_xy(yaw);
-  nav::Point p3(curr_pnt.x() + front_dist, curr_pnt.y() + left_dist,
-                curr_pnt.z());
-  p3.rotate_xy(yaw);
-  nav::Point p4(curr_pnt.x() - back_dist, curr_pnt.y() + left_dist,
-                curr_pnt.z());
-  p4.rotate_xy(yaw);
-  std::vector<nav::Point> bounds = {p1, p2, p3, p4};
-  std::list<nav::Point> pntcloud;
-  for (nav::Point &pnt : slam_pntcloud) {
-    if (pnt.is_inside(bounds) && abs(pnt.z() - curr_pnt.z()) < 1.0f)
-      pntcloud.push_back(pnt);
-  }
-  return pntcloud;
-}
 
 int main() {
   std::cout << "Il godo..." << std::endl;
@@ -101,29 +74,27 @@ int main() {
     ia >> slam_pntcloud;
   }
 
-  nav::Point trg_pnt(17.5, 4.5, 1.5);
-  nav::Point str_pnt(2.5, 2.5, 1.5);
+  nav::Point str_pnt(17.5, 4.5, 1.5);
+  nav::Point trg_pnt(2.5, 2.5, 1.5);
 
-  std::list<const nav::Box *> path_from;
-  std::list<const nav::Box *> *path_to;
+  std::list<size_t> path_from;
+  std::list<size_t> path_to;
   try {
     astar.set_str(str_pnt);
     astar.set_trg(trg_pnt);
     astar.compute_shortest_path();
-    path_to = astar.path(astar.str());
+    path_to = astar.path();
   } catch (const char *err_msg) {
     std::cerr << err_msg << std::endl;
     exit(EXIT_FAILURE);
   }
 
   size_t curr_ind = astar.str();
-  size_t next_ind = path_to->front()->ind();
-  float yaw = astar.map().boxes(curr_ind).cnt().angle_xy(
-      astar.map().boxes(next_ind).cnt());
-  std::cout << astar.map().boxes(curr_ind).cnt() << " -> "
-            << astar.map().boxes(next_ind).cnt() << " : " << yaw << std::endl;
+  size_t next_ind;
+  double yaw;
   size_t cnt = 0;
   size_t fps = 1;
+  std::vector<nav::Point> bounds;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -156,30 +127,36 @@ int main() {
     if ((cnt % fps) == 0) {
       if (curr_ind != astar.trg()) {
         try {
-          std::list<nav::Point> pntcloud =
-              get_pntcloud(astar, curr_ind, yaw, slam_pntcloud);
-          astar.update(curr_ind, pntcloud);
-          path_to = astar.path(curr_ind);
-          path_from.push_back(&astar.map().boxes(curr_ind));
+          next_ind = astar.path().front();
+          yaw = astar.map().boxes(curr_ind).cnt().angle_xy(
+              astar.map().boxes(next_ind).cnt());
+          std::cout << astar.map().boxes(curr_ind).cnt() << " -> "
+                    << astar.map().boxes(next_ind).cnt() << " : " << yaw
+                    << std::endl;
           //
-          curr_ind = path_to->front()->ind();
-          if (curr_ind != astar.trg()) {
-            next_ind = (*std::next(path_to->begin(), 1))->ind();
-            yaw = astar.map().boxes(curr_ind).cnt().angle_xy(
-                astar.map().boxes(next_ind).cnt());
-            //
-            std::cout << astar.map().boxes(curr_ind).cnt() << " -> "
-                      << astar.map().boxes(next_ind).cnt() << " : " << yaw
-                      << std::endl;
+          nav::Point curr_pnt = astar.map().boxes(curr_ind).cnt();
+          nav::Point p1(curr_pnt.x() - 1.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
+          nav::Point p2(curr_pnt.x() + 3.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
+          nav::Point p3(curr_pnt.x() + 3.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          nav::Point p4(curr_pnt.x() - 1.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          bounds = {p1, p2, p3, p4};
+          for (nav::Point &pnt : bounds) {
+            pnt.rotate_xy(curr_pnt, yaw);
           }
+          std::list<nav::Point> pntcloud;
+          for (nav::Point &pnt : slam_pntcloud) {
+            if (pnt.is_inside(bounds) && abs(pnt.z() - curr_pnt.z()) < 1.0f)
+              pntcloud.push_back(pnt);
+          }
+          //
+          astar.update(pntcloud);
+          path_to = astar.path();
         } catch (const char *err_msg) {
           std::cerr << err_msg << std::endl;
           exit(EXIT_FAILURE);
         }
       }
     }
-
-    cnt++;
 
     // Origin
     gl::draw_axes();
@@ -209,12 +186,23 @@ int main() {
     glEnd();
 
     // Boxes
-    /*glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
+    /*glColor4f(0.2f, 0.2f, 0.2f, 0.05f);
     for (const nav::Box &box : astar.map().boxes()) {
       if (!box.free()) //(!b.inside() || !b.free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
     }*/
+
+    //
+    glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
+    gl::draw_link(bounds[0].x(), bounds[0].y(), bounds[0].z(), bounds[1].x(),
+                  bounds[1].y(), bounds[1].z());
+    gl::draw_link(bounds[1].x(), bounds[1].y(), bounds[1].z(), bounds[2].x(),
+                  bounds[2].y(), bounds[2].z());
+    gl::draw_link(bounds[2].x(), bounds[2].y(), bounds[2].z(), bounds[3].x(),
+                  bounds[3].y(), bounds[3].z());
+    gl::draw_link(bounds[3].x(), bounds[3].y(), bounds[3].z(), bounds[0].x(),
+                  bounds[0].y(), bounds[0].z());
 
     // Path
     if (curr_ind != astar.trg()) {
@@ -223,20 +211,35 @@ int main() {
       gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                         drone_radius, drone_height);
       glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-      for (const nav::Box *box : *path_to) {
-        gl::draw_cylinder(box->cnt().x(), box->cnt().y(), box->cnt().z(),
+      for (size_t ind : path_to) {
+        nav::Box box = astar.map().boxes(ind);
+        gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                           drone_radius, drone_height);
       }
     } else {
       glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-      for (const nav::Box *box : path_from) {
-        gl::draw_cylinder(box->cnt().x(), box->cnt().y(), box->cnt().z(),
+      for (size_t ind : path_from) {
+        nav::Box box = astar.map().boxes(ind);
+        gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                           drone_radius, drone_height);
+      }
+    }
+
+    if ((cnt % fps) == 0) {
+      if (curr_ind != astar.trg()) {
+        try {
+          path_from.push_back(curr_ind);
+          curr_ind = astar.next();
+        } catch (const char *err_msg) {
+          std::cerr << err_msg << std::endl;
+          exit(EXIT_FAILURE);
+        }
       }
     }
 
     // Swap frames and Process Events
     pangolin::FinishFrame();
+    cnt++;
   }
 
   return 0;

@@ -121,6 +121,7 @@ private:
   std::vector<ASVertex> vxs_; // Vertices
   size_t str_;                // Start vertex
   size_t trg_;                // Target vertex
+  std::list<size_t> path_;    //
 
 public:
   // Default constructor
@@ -144,14 +145,23 @@ public:
   // Get target vertex
   size_t trg() { return trg_; };
 
+  // Set path
+  void set_path();
   // Get path
-  std::list<const Box *> *path(size_t curr_ind);
+  std::list<size_t> path() { return this->path_; };
 
   // Compute shortest path
   void compute_shortest_path();
 
+  //
+  size_t next() {
+    this->str_ = this->path_.front();
+    this->path_.pop_front();
+    return this->str_;
+  };
+
   // Update map with SLAM pointcloud
-  void update(size_t curr_ind, std::list<Point> slam_pntcloud);
+  void update(std::list<Point> slam_pntcloud);
 };
 
 } // namespace nav
