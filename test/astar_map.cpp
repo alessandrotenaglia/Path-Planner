@@ -98,7 +98,7 @@ int main() {
   nav::Point curr_pnt, next_pnt;
   double yaw;
   size_t cnt = 0;
-  size_t fps = 100;
+  size_t fps = 50;
   nav::Point p1, p2, p3, p4, p5, p6;
   std::vector<nav::Point> bounds;
 
@@ -194,12 +194,12 @@ int main() {
     glEnd();
 
     // Boxes
-    glColor4f(0.2f, 0.2f, 0.2f, 0.05f);
+    /*glColor4f(0.2f, 0.2f, 0.2f, 0.05f);
     for (const nav::Box &box : astar.map().boxes()) {
-      if (!box.free()) //(!b.inside() || !b.free())
+      if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
-    }
+    }*/
 
     //
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);

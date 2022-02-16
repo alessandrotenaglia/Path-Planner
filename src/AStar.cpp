@@ -40,7 +40,8 @@ void AStar::set_str(size_t str_ind) {
   if (str_ind >= this->map_.n())
     throw "ERROR: Start point is out of map!";
   // Check start box
-  if (!this->map_.boxes()[str_ind].free() || !this->map_.boxes()[str_ind].in())
+  if (!this->map_.boxes()[str_ind].is_free() ||
+      !this->map_.boxes()[str_ind].is_in())
     throw "ERROR: Start box is not free!";
   // Set start vertex
   this->str_ = str_ind;
@@ -53,36 +54,28 @@ void AStar::set_trg(const Point &trg_pnt) {
   if (trg_ind >= this->map_.n())
     throw "ERROR: Target point is out of map!";
   // Check target box
-  if (!this->map_.boxes()[trg_ind].free() || !this->map_.boxes()[trg_ind].in())
+  if (!this->map_.boxes()[trg_ind].is_free() ||
+      !this->map_.boxes()[trg_ind].is_in())
     throw "ERROR: Target box is not free!";
   // Set target vertex
   this->trg_ = trg_ind;
   // Initialize vertices
-  for (ASVertex &vx : this->vxs_)
-    vx.set_h(this->map_.boxes(vx.ind()).cnt().dist(
-        this->map_.boxes(this->trg_).cnt()));
-}
-
-// Set path
-void AStar::set_path() {
-  this->path_.clear();
-  size_t ind = this->trg_;
-  while (ind != this->str_) {
-    this->path_.push_front(ind);
-    ind = this->vxs_[ind].pred();
-  }
+  for (size_t ind = 0; ind < this->vxs_.size(); ind++)
+    this->vxs_[ind].set_h(
+        this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
 }
 
 // Compute shortest path
 void AStar::compute_shortest_path() {
   // Initialize vertices
-  for (ASVertex &vx : this->vxs_) {
-    vx.set_g(INF);
-    if (!this->map_.boxes(vx.ind()).free() ||
-        !!this->map_.boxes(vx.ind()).free())
-      vx.set_h(INF);
-    vx.set_f();
-    vx.set_pred(-1);
+  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
+    this->vxs_[ind].set_g(INF);
+    if (!this->map_.boxes(this->vxs_[ind].ind()).is_free() ||
+        !this->map_.boxes(this->vxs_[ind].ind()).is_in()) {
+      this->vxs_[ind].set_h(INF);
+    }
+    this->vxs_[ind].set_f();
+    this->vxs_[ind].set_pred(-1);
   }
   // Initialize OPEN and close set
   FibonacciHeap<ASNode> OPEN;
@@ -123,13 +116,12 @@ void AStar::compute_shortest_path() {
           this->vxs_[edge.first].set_f();
           this->vxs_[edge.first].set_pred(curr.ind());
           if (in_OPEN) {
-            OPEN.decreaseKey(temp, ASNode(this->vxs_[edge.first].ind(),
-                                          this->vxs_[edge.first].f()));
+            OPEN.decreaseKey(temp,
+                             ASNode(edge.first, this->vxs_[edge.first].f()));
           }
           if (in_CLOSED) {
             CLOSED.erase(edge.first);
-            OPEN.insert(ASNode(this->vxs_[edge.first].ind(),
-                               this->vxs_[edge.first].f()));
+            OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].f()));
           }
         }
       }
@@ -138,12 +130,22 @@ void AStar::compute_shortest_path() {
   throw "ERROR: No path found!";
 }
 
+// Set path
+void AStar::set_path() {
+  this->path_.clear();
+  size_t ind = this->trg_;
+  while (ind != this->str_) {
+    this->path_.push_front(ind);
+    ind = this->vxs_[ind].pred();
+  }
+}
+
 // Update map with SLAM pointcloud,
 void AStar::update(std::list<Point> slam_pntcloud) {
-  this->map_.slam_update(slam_pntcloud);
+  std::list<size_t> updated = this->map_.slam_update(slam_pntcloud);
   bool flag = false;
   for (size_t ind : this->path_)
-    if (!this->map().boxes(ind).free()) {
+    if (!this->map().boxes(ind).is_free() || !this->map().boxes(ind).is_in()) {
       flag = true;
       break;
     }

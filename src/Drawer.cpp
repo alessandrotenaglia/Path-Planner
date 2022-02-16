@@ -149,6 +149,15 @@ void draw_polyhedron(const nav::Point &p1, const nav::Point &p2,
                 p4.z() + height);
   gl::draw_link(p4.x(), p4.y(), p4.z() + height, p1.x(), p1.y(),
                 p1.z() + height);
+  //
+  gl::draw_link(p1.x(), p1.y(), p1.z() - height, p1.x(), p1.y(),
+                p1.z() + height);
+  gl::draw_link(p2.x(), p2.y(), p2.z() - height, p2.x(), p2.y(),
+                p2.z() + height);
+  gl::draw_link(p3.x(), p3.y(), p3.z() - height, p3.x(), p3.y(),
+                p3.z() + height);
+  gl::draw_link(p4.x(), p4.y(), p4.z() - height, p4.x(), p4.y(),
+                p4.z() + height);
 }
 
 } // namespace gl

@@ -84,8 +84,7 @@ public:
   // Rotate point of theta on xy-axis
   void rotate_xy(const Point &cnt, float theta);
 
-  // Check if the point is inside a box, defined by SudEstDown and
-  // NordOvestUp boundaries
+  // Check if the point is inside a box
   bool is_inside_xy(std::vector<Point> &points);
 
   // Check if two points are equals

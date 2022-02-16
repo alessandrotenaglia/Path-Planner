@@ -62,13 +62,13 @@ public:
   // Set inside
   void set_in(bool in) { in_ = in; }
   // Get inside
-  const bool &in() const { return in_; }
+  const bool &is_in() const { return in_; }
 
   // Set free
   void set_free() { free_ = true; }
   void set_busy() { free_ = false; }
   // Get free
-  const bool &free() const { return free_; }
+  const bool &is_free() const { return free_; }
 
   // Add a fixed point inside the box
   void add_fix_pnt(const Point &pnt) { fix_pnts_.push_back(pnt); }

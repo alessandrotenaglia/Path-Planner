@@ -23,7 +23,7 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     : xlen_(xlen), ylen_(ylen), zlen_(zlen), nx_(nx), ny_(ny), nz_(nz),
       n_(nx * ny * nz), radius_(radius), height_(height), boxes_(n_),
       updatable_(n_, true) {
-  //
+  // Compute step
   this->xstep_ = util::round(xlen / (float)nx);
   this->ystep_ = util::round(ylen / (float)ny);
   this->zstep_ = util::round(zlen / (float)nz);
@@ -50,8 +50,11 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     // Check if the box is inside the space
     if ((0 <= cnt.x() - this->radius_ && cnt.x() + this->radius_ <= xlen_) &&
         (0 <= cnt.y() - this->radius_ && cnt.y() + this->radius_ <= ylen_) &&
-        (0 <= cnt.z() - this->height_ && cnt.z() + this->height_ <= zlen_))
+        (0 <= cnt.z() - this->height_ && cnt.z() + this->height_ <= zlen_)) {
       this->boxes_[ind].set_in(true);
+    } else {
+      this->updatable_[ind] = false;
+    }
     // Set box neighbors
     neighs = util::find_neighs(size, ind, xy_level, z_level);
     if (neighs == NULL)
@@ -70,8 +73,9 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
     for (size_t ind_neigh : this->boxes_[ind].neighs()) {
       for (const Point &pnt : this->boxes_[ind_neigh].fix_pnts()) {
         if (this->boxes_[ind].cnt().dist_xy(pnt) <= this->radius_ &&
-            this->boxes_[ind].cnt().dist_z(pnt) <= this->height_)
+            this->boxes_[ind].cnt().dist_z(pnt) <= this->height_) {
           count++;
+        }
         if (count > 0) {
           this->boxes_[ind].set_busy();
           this->updatable_[ind] = false;
@@ -85,7 +89,7 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
   // Link boxes close to each other
   std::vector<size_t> *links;
   for (size_t ind = 0; ind < this->n_; ind++) {
-    if (!this->boxes_[ind].free() || !this->boxes_[ind].in())
+    if (!this->boxes_[ind].is_free() || !this->boxes_[ind].is_in())
       continue;
     // Find links
     links = util::find_links(size, ind);
@@ -93,7 +97,7 @@ Map::Map(float xlen, float ylen, float zlen, size_t nx, size_t ny, size_t nz,
       throw "find_links() on " + std::to_string(ind) + " failed!";
     // Set links
     for (size_t link : *links) {
-      if (this->boxes_[link].free() && this->boxes_[link].in()) {
+      if (this->boxes_[link].is_free() && this->boxes_[link].is_in()) {
         this->boxes_[ind].add_edge(
             link, this->boxes_[ind].cnt().dist(this->boxes_[link].cnt()));
       }
@@ -125,7 +129,7 @@ std::list<size_t> Map::slam_update(std::list<Point> slam_pntcloud) {
               this->boxes_[ind].cnt().dist_z(pnt) <= this->height_)
             count++;
           if (count > 0) {
-            if (this->boxes_[ind].free())
+            if (this->boxes_[ind].is_free())
               updated.push_back(ind);
             this->boxes_[ind].set_busy();
             break;
