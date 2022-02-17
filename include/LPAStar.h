@@ -26,103 +26,137 @@ namespace nav {
 class LPANode {
 private:
   size_t ind_; // Linear index
-  float f_;    // Priority value
+  float k1_;   // Priority value
+  float k2_;   // Priority value
 
 public:
   // Default constructor
-  LPANode() : ind_(-1), f_(INF){};
+  LPANode() : ind_(-1), k1_(INF), k2_(INF){};
 
   // Default constructor
-  LPANode(size_t ind, float f) : ind_(ind), f_(f){};
+  LPANode(size_t ind, float k1, float k2) : ind_(ind), k1_(k1), k2_(k2){};
 
   // Set box ind
   void set_ind(size_t ind) { ind_ = ind; }
   // Get box ind
   const size_t &ind() const { return ind_; }
 
-  // Set f value
-  void set_f(float f) { f_ = f; }
-  // Get f value
-  const float &f() const { return f_; }
-
-  // Operator >
-  bool operator>(LPANode rhs) const { return (this->f() > rhs.f()); }
+  // Set key
+  void set_k1(float k1) { k1_ = k1; }
+  void set_k2(float k2) { k2_ = k2; }
+  // Get key
+  const float &k1() const { return k1_; }
+  const float &k2() const { return k2_; }
 
   // Operator <
-  bool operator<(LPANode rhs) const { return (this->f() < rhs.f()); }
+  bool operator<(LPANode rhs) const {
+    if (k1_ < rhs.k1()) {
+      return true;
+    } else if (k1_ == rhs.k1()) {
+      return k2_ < rhs.k2();
+    } else {
+      return false;
+    }
+  }
+
+  // Operator >
+  bool operator>(LPANode rhs) const {
+    if (k1_ > rhs.k1()) {
+      return true;
+    } else if (k1_ == rhs.k1()) {
+      return k2_ > rhs.k2();
+    } else {
+      return false;
+    }
+  }
 
   // Operator ==
-  bool operator==(LPANode rhs) const { return (this->f() == rhs.f()); }
+  bool operator==(LPANode rhs) const {
+    return (k1_ == rhs.k1()) & (k2_ == rhs.k2());
+  }
 
   // Convert a ASNode in string form
   friend std::ostream &operator<<(std::ostream &os, const LPANode &vx) {
-    os << "[ind: " << vx.ind() << "; f: " << vx.f() << "]";
+    os << "[ind: " << vx.ind() << "; k1: " << vx.k1() << "; k2: " << vx.k2()
+       << "]";
     return os;
   }
 };
 
 class LPAVertex {
 private:
-  size_t ind_;  // Linear index
-  float f_;     // Priority value
-  float g_;     // Cost to vertex
-  float h_;     // Heuristic to target
-  size_t pred_; // Predecessor
+  size_t ind_; // Linear index
+  float g_;    // Cost to vertex
+  float rhs_;  // Priority value
+  float k1_;   // Priority value
+  float k2_;   // Priority value
+  float h_;    // Heuristic to target
 
 public:
   // Default constructor
-  LPAVertex() : ind_(-1), f_(INF), g_(INF), h_(INF), pred_(-1){};
+  LPAVertex() : ind_(-1), g_(INF), rhs_(INF), k1_(INF), k2_(INF), h_(INF) {};
 
   // Set box ind
   void set_ind(size_t ind) { ind_ = ind; }
   // Get box ind
   const size_t &ind() const { return ind_; }
 
-  // Set f value
-  void set_f() { f_ = g_ + h_; }
-  // Get f value
-  const float &f() const { return f_; }
-
   // Set g value
   void set_g(float g) { g_ = g; }
   // Get g value
   const float &g() const { return g_; }
+
+  // Set rhs value
+  void set_rhs(float rhs) { rhs_ = rhs; }
+  // Get rhs value
+  const float &rhs() const { return rhs_; }
+
+  // Set f value
+  void calculate_key() {
+    k1_ = std::min(g_, rhs_ + h_);
+    k2_ = std::min(g_, rhs_);
+  }
+  // Get f value
+  const float &k1() const { return k1_; }
+  const float &k2() const { return k2_; }
 
   // Set h value
   void set_h(float h) { h_ = h; }
   // Get h value
   const float &h() const { return h_; }
 
-  // Set predecessor
-  void set_pred(size_t pred) { pred_ = pred; }
-  // Get predecessor
-  size_t pred() { return pred_; }
-
-  /*// Operator >
-  bool operator>(ASVertex *rhs) const { return (this->f() > rhs->f()); }
+  // Get node
+  const LPANode &node() const{
+    calculate_key();
+    return LPANode(ind_, k1_, k2_);
+  }
 
   // Operator <
-  bool operator<(ASVertex *rhs) const { return (this->f() < rhs->f()); }
+  bool operator<(LPAVertex &rhs) const {
+    if (k1_ < rhs.k1()) {
+      return true;
+    } else if (k1_ == rhs.k1()) {
+      return k2_ < rhs.k2();
+    } else {
+      return false;
+    }
+  }
 
-  // Operator ==
-  bool operator==(ASVertex *rhs) const { return (this->f() == rhs->f()); }*/
-
-  // Convert a point in string form
+  // Convert a ASNode in string form
   friend std::ostream &operator<<(std::ostream &os, const LPAVertex &vx) {
-    os << "[ind: " << vx.ind() << "; f: " << vx.f() << "]";
+    os << "[ind: " << vx.ind() << "; k1: " << vx.k1() << "; k2: " << vx.k2()
+       << "]";
     return os;
   }
 };
 
 class LPAStar {
 private:
-  Map map_;                          // Map
-  std::vector<LPAVertex> vxs_;       // Vertices
-  size_t str_;                       // Start vertex
-  size_t trg_;                       // Target vertex
-  FibonacciHeap<LPANode> OPEN;       //
-  std::unordered_set<size_t> CLOSED; //
-  std::list<size_t> path_;           // Path
+  Map map_;                    // Map
+  std::vector<LPAVertex> vxs_; // Vertices
+  size_t str_;                 // Start vertex
+  size_t trg_;                 // Target vertex
+  FibonacciHeap<LPANode> OPEN; // Priority queue
 
 public:
   // Default constructor
@@ -146,23 +180,20 @@ public:
   // Get target vertex
   size_t trg() { return trg_; };
 
-  // Set path
-  void set_path();
   // Get path
-  std::list<size_t> path() { return this->path_; };
+  std::list<size_t> path(size_t curr_ind);
+
+  // Initialize
+  void initialize();
 
   // Compute shortest path
   void compute_shortest_path();
 
   //
-  size_t next() {
-    this->str_ = this->path_.front();
-    this->path_.pop_front();
-    return this->str_;
-  };
+  void update_node(size_t ind);
 
   // Update map with SLAM pointcloud
-  void update(std::list<Point> slam_pntcloud);
+  void update_map(std::list<Point> slam_pntcloud);
 };
 
 } // namespace nav

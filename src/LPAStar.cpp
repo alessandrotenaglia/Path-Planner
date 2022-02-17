@@ -20,7 +20,7 @@
 namespace nav {
 
 // Initialize A*
-AStar::LPAStar(Map map) : map_(map), vxs_(map.n()), str_(-1), trg_(-1) {
+LPAStar::LPAStar(Map map) : map_(map), vxs_(map.n()), str_(-1), trg_(-1) {
   // Loop on vertices
   for (size_t ind = 0; ind < this->map_.n(); ind++) {
     // Set the box index
@@ -60,96 +60,92 @@ void LPAStar::set_trg(const Point &trg_pnt) {
   this->trg_ = trg_ind;
   // Initialize vertices
   for (size_t ind = 0; ind < this->vxs_.size(); ind++)
-    this->vxs_[ind].set_h(
-        this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
+    if (this->map_.updatable(ind)) {
+      this->vxs_[ind].set_h(
+          this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
+    } else {
+      this->vxs_[ind].set_h(INF);
+    }
+}
+
+// Initialize
+void LPAStar::initialize() {
+  this->OPEN = FibonacciHeap<LPANode>();
+  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
+    this->vxs_[ind].set_g(INF);
+    this->vxs_[ind].set_rhs(INF);
+  }
+  this->vxs_[this->str_].set_rhs(0.0f);
+  this->vxs_[this->str_].calculate_key();
+  this->OPEN.insert(LPANode(this->str_, this->vxs_[this->str_].k1(),
+                            this->vxs_[this->str_].k2()));
 }
 
 // Compute shortest path
 void LPAStar::compute_shortest_path() {
-  // Initialize vertices
-  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
-    this->vxs_[ind].set_g(INF);
-    if (!this->map_.boxes(this->vxs_[ind].ind()).is_free() ||
-        !this->map_.boxes(this->vxs_[ind].ind()).is_in()) {
-      this->vxs_[ind].set_h(INF);
+  while ((this->OPEN.getMinimum() < this->vxs_[this->trg_].node()) ||
+         (this->vxs_[this->trg_].g() != this->vxs_[this->trg_].rhs())) {
+    LPANode curr = OPEN.removeMinimum();
+    if (this->vxs_[curr.ind()].g() > this->vxs_[curr.ind()].rhs()) {
+      this->vxs_[curr.ind()].set_g(this->vxs_[curr.ind()].rhs());
+    } else {
+      this->vxs_[curr.ind()].set_g(INF);
+      this->update_node(curr.ind());
     }
-    this->vxs_[ind].set_f();
-    this->vxs_[ind].set_pred(-1);
-  }
-  // Initialize OPEN and close set
-  FibonacciHeap<ASNode> OPEN;
-  std::unordered_set<size_t> CLOSED;
-  // Setup start vertex
-  this->vxs_[this->str_].set_g(0.0f);
-  this->vxs_[this->str_].set_f();
-  OPEN.insert(ASNode(this->str_, this->vxs_[this->str_].f()));
-  // Loop on OPEN set
-  while (!OPEN.isEmpty()) {
-    // Pop first vertex from the OPEN set and add it to the CLOSED set
-    ASNode curr = OPEN.removeMinimum();
-    CLOSED.insert(curr.ind());
-    // Check if the target has been reached
-    if (curr.ind() == this->trg_) {
-      this->set_path();
-      return;
-    }
-    // Loop on edges
     for (WtEdge edge : this->map_.boxes(curr.ind()).edges()) {
-      // Cost to reach the link passing through the current vertex
-      float g_score = util::round(this->vxs_[curr.ind()].g() + edge.second);
-      // Check if the vertex is in the OPEN set
-      node<ASNode> *temp =
-          OPEN.find(ASNode(edge.first, this->vxs_[edge.first].f()));
-      bool in_OPEN = (temp != NULL);
-      // Check if the vertex is in the CLOSED set
-      bool in_CLOSED = (CLOSED.find(edge.first) != CLOSED.end());
-      //
-      if (!in_OPEN && !in_CLOSED) {
-        this->vxs_[edge.first].set_g(g_score);
-        this->vxs_[edge.first].set_f();
-        this->vxs_[edge.first].set_pred(curr.ind());
-        OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].f()));
-      } else {
-        if (g_score < this->vxs_[edge.first].g()) {
-          this->vxs_[edge.first].set_g(g_score);
-          this->vxs_[edge.first].set_f();
-          this->vxs_[edge.first].set_pred(curr.ind());
-          if (in_OPEN) {
-            OPEN.decreaseKey(temp,
-                             ASNode(edge.first, this->vxs_[edge.first].f()));
-          }
-          if (in_CLOSED) {
-            CLOSED.erase(edge.first);
-            OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].f()));
-          }
-        }
-      }
+      this->update_node(edge.first);
     }
   }
-  throw "ERROR: No path found!";
+}
+
+void LPAStar::update_node(size_t ind) {
+  if (ind != this->str_) {
+    node<LPANode> *temp = OPEN.find(this->vxs_[ind].node());
+    float rhs_score = INF;
+    for (WtEdge edge : this->map_.boxes(ind).edges()) {
+      rhs_score = std::min(rhs_score, this->vxs_[edge.first].rhs());
+    }
+    this->vxs_[ind].set_rhs(rhs_score);
+    if (this->vxs_[ind].g() == this->vxs_[ind].rhs()) {
+      if (temp != NULL) {
+        OPEN.decreaseKey(temp, LPANode(ind, 0.0f, 0.0f));
+        OPEN.removeMinimum();
+      }
+    } else {
+      OPEN.decreaseKey(temp, this->vxs_[ind].node());
+    }
+  }
 }
 
 // Set path
-void AStar::set_path() {
-  this->path_.clear();
+std::list<size_t> LPAStar::path(size_t curr_ind) {
+  if (this->vxs_[this->trg_].g() == INF)
+    throw "ERROR: No path found";
+  std::list<size_t> path;
   size_t ind = this->trg_;
   while (ind != this->str_) {
-    this->path_.push_front(ind);
-    ind = this->vxs_[ind].pred();
+    float score, min_val = INF;
+    size_t min_ind = -1;
+    for (WtEdge edge : this->map_.boxes(ind).edges()) {
+      score = this->vxs_[edge.first].g() + edge.second;
+      if (score < min_val) {
+        min_val = score;
+        min_ind = edge.first;
+      }
+    }
+    if (min_ind == curr_ind)
+      break;
+    ind = min_ind;
+    path.push_front(min_ind);
   }
+  return path;
 }
 
 // Update map with SLAM pointcloud,
-void AStar::update(std::list<Point> slam_pntcloud) {
+void LPAStar::update_map(std::list<Point> slam_pntcloud) {
   std::list<size_t> updated = this->map_.slam_update(slam_pntcloud);
-  bool flag = false;
-  for (size_t ind : this->path_)
-    if (!this->map().boxes(ind).is_free() || !this->map().boxes(ind).is_in()) {
-      flag = true;
-      break;
-    }
-  if (flag) {
-    this->compute_shortest_path();
+  for (size_t ind : updated) {
+    this->update_node(ind);
   }
 }
 

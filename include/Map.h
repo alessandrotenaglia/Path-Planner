@@ -61,6 +61,9 @@ public:
   // Get ind-th box
   const Box &boxes(size_t ind) const { return boxes_[ind]; }
 
+  // Get updatable
+  const bool &updatable(size_t ind) const { return updatable_[ind]; }
+
   // Update map from SLAM pointcloud
   std::list<size_t> slam_update(std::list<Point> slam_pntcloud);
 
