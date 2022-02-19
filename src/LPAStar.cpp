@@ -59,13 +59,14 @@ void LPAStar::set_trg(const Point &trg_pnt) {
   // Set target vertex
   this->trg_ = trg_ind;
   // Initialize vertices
-  for (size_t ind = 0; ind < this->vxs_.size(); ind++)
+  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
     if (this->map_.updatable(ind)) {
       this->vxs_[ind].set_h(
           this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
     } else {
       this->vxs_[ind].set_h(INF);
     }
+  }
 }
 
 // Initialize

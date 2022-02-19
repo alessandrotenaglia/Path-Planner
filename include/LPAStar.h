@@ -87,7 +87,7 @@ class LPAVertex {
 private:
   size_t ind_; // Linear index
   float g_;    // Cost to vertex
-  float rhs_;  // Priority value
+  float rhs_;  // Cost to vertex
   float k1_;   // Priority value
   float k2_;   // Priority value
   float h_;    // Heuristic to target
@@ -126,7 +126,7 @@ public:
   const float &h() const { return h_; }
 
   // Get node
-  const LPANode &node() const{
+  LPANode node(){
     calculate_key();
     return LPANode(ind_, k1_, k2_);
   }

@@ -4,9 +4,9 @@ map:
   xlen: 20
   ylen: 10
   zlen: 3
-  nx: 60
-  ny: 30
-  nz: 9
+  nx: 10
+  ny: 5
+  nz: 3
 
 drone:
   radius: 0.5

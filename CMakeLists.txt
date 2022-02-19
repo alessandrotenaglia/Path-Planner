@@ -55,3 +55,6 @@ target_link_libraries(fibonacci PRIVATE ${PROJECT_NAME}_utils)
 
 add_executable(astar test/astar_map.cpp)
 target_link_libraries(astar PRIVATE ${PROJECT_NAME}_utils)
+
+add_executable(lpa test/lpa_map.cpp)
+target_link_libraries(lpa PRIVATE ${PROJECT_NAME}_utils)

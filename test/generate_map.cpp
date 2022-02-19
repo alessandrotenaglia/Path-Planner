@@ -55,11 +55,23 @@ int main() {
   double window_ystart = (double)window_cfg["ystart"];
 
   std::list<nav::Point> fix_pntcloud;
-  /*{
+  {
     std::ifstream ifs("../data/fix_pntcloud.dat");
     boost::archive::binary_iarchive ia(ifs);
     ia >> fix_pntcloud;
-  }*/
+  }
+  std::list<nav::Point> slam_pntcloud;
+  {
+    std::ifstream ifs("../data/slam_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> slam_pntcloud;
+  }
+  std::list<nav::Point> total_pntcloud;
+  {
+    std::ifstream ifs("../data/total_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> total_pntcloud;
+  }
 
   nav::Map map;
   try {

@@ -1,6 +1,6 @@
 /**
- * @file generate_pntcloud.h
- * @brief Source file for the view of the map
+ * @file lpa_map.h
+ * @brief Source file for LPA*
  * @date 11 January 2022
  * @author Alessandro Tenaglia
  */
@@ -20,11 +20,12 @@
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
 #include "Drawer.h"
-#include "Map.h"
+#include "LPAStar.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
 /*---------------------------------------------------------------------------*/
+
 int main() {
   std::cout << "Il godo..." << std::endl;
 
@@ -64,6 +65,42 @@ int main() {
     boost::archive::binary_iarchive ia(ifs);
     ia >> map;
   }
+  nav::LPAStar lpa(map);
+  std::list<nav::Point> slam_pntcloud;
+  {
+    std::ifstream ifs("../data/slam_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> slam_pntcloud;
+  }
+  std::list<nav::Point> total_pntcloud;
+  {
+    std::ifstream ifs("../data/total_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> total_pntcloud;
+  }
+
+  nav::Point trg_pnt(17.5, 4.5, 1.5);
+  nav::Point str_pnt(2.5, 2.5, 1.5);
+
+  std::list<size_t> path_from;
+  std::list<size_t> path_to;
+  try {
+    lpa.set_str(str_pnt);
+    lpa.set_trg(trg_pnt);
+    lpa.compute_shortest_path();
+    path_to = lpa.path(lpa.str());
+  } catch (const char *err_msg) {
+    std::cerr << err_msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  size_t curr_ind = lpa.str(), next_ind;
+  nav::Point curr_pnt, next_pnt;
+  double yaw;
+  size_t cnt = 0;
+  size_t fps = 50;
+  nav::Point p1, p2, p3, p4, p5, p6;
+  std::vector<nav::Point> bounds;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
   glEnable(GL_DEPTH_TEST);
@@ -93,6 +130,42 @@ int main() {
     d_cam.Activate(s_cam);
     glClearColor(1.0f, 1.0f, 1.0f, 0.2f);
 
+    if ((cnt % fps) == 0) {
+      if (curr_ind != lpa.trg()) {
+        try {
+          curr_ind = lpa.str();
+          curr_pnt = lpa.map().boxes(curr_ind).cnt();
+          next_ind = lpa.path(curr_ind).front();
+          next_pnt = lpa.map().boxes(next_ind).cnt();
+          if ((curr_pnt.x() != next_pnt.x()) || (curr_pnt.y() != next_pnt.y()))
+            yaw = curr_pnt.angle_xy(next_pnt);
+          std::cout << curr_pnt << " -> " << next_pnt << " : " << yaw
+                    << std::endl;
+          //
+          p1.set(curr_pnt.x() - 1.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
+          p1.rotate_xy(curr_pnt, yaw);
+          p2.set(curr_pnt.x() + 3.0f, curr_pnt.y() - 1.0f, curr_pnt.z());
+          p2.rotate_xy(curr_pnt, yaw);
+          p3.set(curr_pnt.x() + 3.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          p3.rotate_xy(curr_pnt, yaw);
+          p4.set(curr_pnt.x() - 1.0f, curr_pnt.y() + 1.0f, curr_pnt.z());
+          p4.rotate_xy(curr_pnt, yaw);
+          bounds = {p1, p2, p3, p4};
+          std::list<nav::Point> pntcloud;
+          for (nav::Point &pnt : total_pntcloud) {
+            if (pnt.is_inside_xy(bounds) && abs(curr_pnt.z() - pnt.z()) <= 1.0f)
+              pntcloud.push_back(pnt);
+          }
+          //
+          lpa.update_map(pntcloud);
+          path_to = lpa.path(curr_ind);
+        } catch (const char *err_msg) {
+          std::cerr << err_msg << std::endl;
+          exit(EXIT_FAILURE);
+        }
+      }
+    }
+
     // Origin
     gl::draw_axes();
 
@@ -100,63 +173,74 @@ int main() {
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     gl::draw_xyplane(map_xlen, map_ylen);
 
-    // Points
+    // Fixed points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : map.boxes()) {
-      for (const nav::Point &pnt : box.fix_pnts()) {
+    for (const nav::Box &b : lpa.map().boxes()) {
+      for (const nav::Point &pnt : b.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
     }
     glEnd();
+
+    // SLAM points
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : map.boxes()) {
-      for (const nav::Point &pnt : box.slam_pnts()) {
+    for (const nav::Box &b : lpa.map().boxes()) {
+      for (const nav::Point &pnt : b.slam_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
     }
     glEnd();
 
-    /*//
-    glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
-    nav::Point pnt(0.5, 2.5, 1.5);
-    for (size_t neigh : map.boxes(map.pnt_to_ind(pnt)).neighs()) {
-      gl::draw_box(map.boxes(neigh).cnt().x(), map.boxes(neigh).cnt().y(),
-                   map.boxes(neigh).cnt().z(), map_xstep, map_ystep, map_zstep);
-    }
-
-    //
-    glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-    nav::Point link_pnt(0.5, 4.5, 1.5);
-    for (nav::WtEdge edge : map.boxes(map.pnt_to_ind(link_pnt)).edges()) {
-      gl::draw_box(
-          map.boxes(edge.first).cnt().x(), map.boxes(edge.first).cnt().y(),
-          map.boxes(edge.first).cnt().z(), map_xstep, map_ystep, map_zstep);
-    }*/
-
     // Boxes
-    glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
-    for (const nav::Box &box : map.boxes()) {
+    /*glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
+    for (const nav::Box &box : lpa.map().boxes()) {
       if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
                      map_ystep, map_zstep);
+    }*/
+
+    //
+    glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
+    gl::draw_polyhedron(p1, p2, p3, p4, 1.0f);
+
+    // Path
+    if (curr_ind != lpa.trg()) {
+      glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
+      nav::Box box = lpa.map().boxes(curr_ind);
+      gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
+                        drone_radius, drone_height);
+      glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
+      for (size_t ind : path_to) {
+        nav::Box box = lpa.map().boxes(ind);
+        gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
+                          drone_radius, drone_height);
+      }
+    } else {
+      glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
+      for (size_t ind : path_from) {
+        nav::Box box = lpa.map().boxes(ind);
+        gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
+                          drone_radius, drone_height);
+      }
     }
 
-    // Links
-    glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::Box &src : map.boxes()) {
-      for (nav::WtEdge edge : src.edges()) {
-        if (edge.second < 0.42)
-          continue;
-        nav::Box dest = map.boxes(edge.first);
-        gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
-                      dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
+    if ((cnt % fps) == (fps / 2)) {
+      if (curr_ind != lpa.trg()) {
+        try {
+          path_from.push_back(curr_ind);
+          //curr_ind = lpa.next();
+        } catch (const char *err_msg) {
+          std::cerr << err_msg << std::endl;
+          exit(EXIT_FAILURE);
+        }
       }
     }
 
     // Swap frames and Process Events
     pangolin::FinishFrame();
+    cnt++;
   }
 
   return 0;
