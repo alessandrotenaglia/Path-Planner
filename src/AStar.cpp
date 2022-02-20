@@ -72,16 +72,6 @@ void AStar::set_trg(const Point &trg_pnt) {
 
 // Compute shortest path
 void AStar::compute_shortest_path() {
-  // Initialize vertices
-  /*for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
-    this->vxs_[ind].set_g(INF);
-    if (!this->map_.boxes(this->vxs_[ind].ind()).is_free() ||
-        !this->map_.boxes(this->vxs_[ind].ind()).is_in()) {
-      this->vxs_[ind].set_h(INF);
-    }
-    this->vxs_[ind].set_f();
-    this->vxs_[ind].set_pred(-1);
-  }*/
   // Initialize OPEN and close set
   FibonacciHeap<ASNode> OPEN;
   std::unordered_set<size_t> CLOSED;
