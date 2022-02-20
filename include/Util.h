@@ -29,7 +29,7 @@ typedef std::pair<size_t, float> WtEdge;
 #define INF 1000000000.0f
 
 // Convert three-dimensional indexes into a linear index according to the given
-
+// size
 size_t sub_to_ind_xy(std::vector<size_t> &size, std::vector<size_t> &idxs);
 size_t sub_to_ind(std::vector<size_t> &size, std::vector<size_t> &idxs);
 
