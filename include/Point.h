@@ -12,6 +12,9 @@
 /*                          Standard header includes                         */
 /*---------------------------------------------------------------------------*/
 #include <boost/serialization/set.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/utility.hpp>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -25,8 +28,6 @@
 /*                              Class Definition                             */
 /*---------------------------------------------------------------------------*/
 namespace nav {
-
-#define INF std::numeric_limits<float>::max()
 
 class Point {
 private:

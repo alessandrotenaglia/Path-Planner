@@ -26,12 +26,12 @@ void Point::set(float x, float y, float z) {
 float Point::dist_xy(const Point &other) const {
   float dx = other.x() - this->x();
   float dy = other.y() - this->y();
-  return util::round(sqrt((dx * dx) + (dy * dy)));
+  return nav::round(sqrt((dx * dx) + (dy * dy)));
 }
 
 // Compute the difference of heights between two points
 float Point::dist_z(const Point &other) const {
-  return util::round(abs(other.z() - this->z()));
+  return nav::round(abs(other.z() - this->z()));
 }
 
 // Compute Euclidean distance between two points
@@ -39,14 +39,14 @@ float Point::dist(const Point &other) const {
   float dx = other.x() - this->x();
   float dy = other.y() - this->y();
   float dz = other.z() - this->z();
-  return util::round(sqrt((dx * dx) + (dy * dy) + (dz * dz)));
+  return nav::round(sqrt((dx * dx) + (dy * dy) + (dz * dz)));
 }
 
 // Compute the angle between two points
 float Point::angle_xy(const Point &other) const {
   float dx = other.x() - this->x();
   float dy = other.y() - this->y();
-  return util::round(atan2(dy, dx));
+  return nav::round(atan2(dy, dx));
 }
 
 // Rotate point of theta on xy-axis
@@ -54,9 +54,9 @@ void Point::rotate_xy(const Point &cnt, float theta) {
   float xtemp = this->x_ - cnt.x();
   float ytemp = this->y_ - cnt.y();
   this->x_ =
-      util::round(((cos(theta) * xtemp) - (sin(theta) * ytemp)) + cnt.x());
+      nav::round(((cos(theta) * xtemp) - (sin(theta) * ytemp)) + cnt.x());
   this->y_ =
-      util::round(((sin(theta) * xtemp) + (cos(theta) * ytemp)) + cnt.y());
+      nav::round(((sin(theta) * xtemp) + (cos(theta) * ytemp)) + cnt.y());
 }
 
 // Check if the point is inside a box

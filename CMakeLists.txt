@@ -27,10 +27,9 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 
 # Create a shared library with common source files.
 add_library(${PROJECT_NAME}_utils STATIC src/AStar.cpp
-                                         src/LPAStar.cpp
-                                         src/Box.cpp
                                          src/Drawer.cpp
-                                         src/Map.cpp
+                                         src/ExpMap.cpp
+                                         src/NavMap.cpp
                                          src/Point.cpp
                                          src/Util.cpp)
 target_link_libraries(${PROJECT_NAME}_utils PUBLIC Boost::serialization)
@@ -41,20 +40,23 @@ target_link_libraries(${PROJECT_NAME}_utils PRIVATE ${Pangolin_LIBRARIES})
 add_executable(gen_pntcloud test/generate_pntcloud.cpp)
 target_link_libraries(gen_pntcloud PRIVATE ${PROJECT_NAME}_utils)
 
-add_executable(view_pntcloud test/view_pntcloud.cpp)
-target_link_libraries(view_pntcloud PRIVATE ${PROJECT_NAME}_utils)
+add_executable(view_nav_pntcloud test/view_nav_pntcloud.cpp)
+target_link_libraries(view_nav_pntcloud PRIVATE ${PROJECT_NAME}_utils)
+
+add_executable(view_exp_pntcloud test/view_exp_pntcloud.cpp)
+target_link_libraries(view_exp_pntcloud PRIVATE ${PROJECT_NAME}_utils)
 
 add_executable(gen_map test/generate_map.cpp)
 target_link_libraries(gen_map PRIVATE ${PROJECT_NAME}_utils)
 
-add_executable(view_map test/view_map.cpp)
-target_link_libraries(view_map PRIVATE ${PROJECT_NAME}_utils)
+add_executable(view_nav_map test/view_nav_map.cpp)
+target_link_libraries(view_nav_map PRIVATE ${PROJECT_NAME}_utils)
 
-add_executable(fibonacci test/fibonacci_heap.cpp)
-target_link_libraries(fibonacci PRIVATE ${PROJECT_NAME}_utils)
+add_executable(view_exp_map test/view_exp_map.cpp)
+target_link_libraries(view_exp_map PRIVATE ${PROJECT_NAME}_utils)
 
 add_executable(astar test/astar_map.cpp)
 target_link_libraries(astar PRIVATE ${PROJECT_NAME}_utils)
 
-add_executable(lpa test/lpa_map.cpp)
-target_link_libraries(lpa PRIVATE ${PROJECT_NAME}_utils)
+add_executable(explorator test/explorator.cpp)
+target_link_libraries(explorator PRIVATE ${PROJECT_NAME}_utils)

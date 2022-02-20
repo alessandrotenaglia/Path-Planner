@@ -21,7 +21,7 @@
 namespace nav {
 
 // Initialize A*
-AStar::AStar(Map map) : map_(map), vxs_(map.n()), str_(-1), trg_(-1) {
+AStar::AStar(NavMap map) : map_(map), vxs_(map.n()), str_(-1), trg_(-1) {
   // Loop on vertices
   for (size_t ind = 0; ind < this->map_.n(); ind++) {
     // Set the box index
@@ -60,15 +60,20 @@ void AStar::set_trg(const Point &trg_pnt) {
   // Set target vertex
   this->trg_ = trg_ind;
   // Initialize vertices
-  for (size_t ind = 0; ind < this->vxs_.size(); ind++)
-    this->vxs_[ind].set_h(
-        this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
+  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
+    if (this->map_.is_updatable(ind)) {
+      this->vxs_[ind].set_h(
+          this->map_.boxes(ind).cnt().dist(this->map_.boxes(this->trg_).cnt()));
+    } else {
+      this->vxs_[ind].set_h(INF);
+    }
+  }
 }
 
 // Compute shortest path
 void AStar::compute_shortest_path() {
   // Initialize vertices
-  for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
+  /*for (size_t ind = 0; ind < this->vxs_.size(); ind++) {
     this->vxs_[ind].set_g(INF);
     if (!this->map_.boxes(this->vxs_[ind].ind()).is_free() ||
         !this->map_.boxes(this->vxs_[ind].ind()).is_in()) {
@@ -76,14 +81,13 @@ void AStar::compute_shortest_path() {
     }
     this->vxs_[ind].set_f();
     this->vxs_[ind].set_pred(-1);
-  }
+  }*/
   // Initialize OPEN and close set
   FibonacciHeap<ASNode> OPEN;
   std::unordered_set<size_t> CLOSED;
   // Setup start vertex
   this->vxs_[this->str_].set_g(0.0f);
-  this->vxs_[this->str_].set_f();
-  OPEN.insert(ASNode(this->str_, this->vxs_[this->str_].f()));
+  OPEN.insert(ASNode(this->str_, this->vxs_[this->str_].get_f()));
   // Loop on OPEN set
   while (!OPEN.isEmpty()) {
     // Pop first vertex from the OPEN set and add it to the CLOSED set
@@ -97,31 +101,29 @@ void AStar::compute_shortest_path() {
     // Loop on edges
     for (WtEdge edge : this->map_.boxes(curr.ind()).edges()) {
       // Cost to reach the link passing through the current vertex
-      float g_score = util::round(this->vxs_[curr.ind()].g() + edge.second);
+      float g_score = nav::round(this->vxs_[curr.ind()].g() + edge.second);
       // Check if the vertex is in the OPEN set
       node<ASNode> *temp =
-          OPEN.find(ASNode(edge.first, this->vxs_[edge.first].f()));
+          OPEN.find(ASNode(edge.first, this->vxs_[edge.first].get_f()));
       bool in_OPEN = (temp != NULL);
       // Check if the vertex is in the CLOSED set
       bool in_CLOSED = (CLOSED.find(edge.first) != CLOSED.end());
       //
       if (!in_OPEN && !in_CLOSED) {
         this->vxs_[edge.first].set_g(g_score);
-        this->vxs_[edge.first].set_f();
         this->vxs_[edge.first].set_pred(curr.ind());
-        OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].f()));
+        OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].get_f()));
       } else {
         if (g_score < this->vxs_[edge.first].g()) {
           this->vxs_[edge.first].set_g(g_score);
-          this->vxs_[edge.first].set_f();
           this->vxs_[edge.first].set_pred(curr.ind());
           if (in_OPEN) {
-            OPEN.decreaseKey(temp,
-                             ASNode(edge.first, this->vxs_[edge.first].f()));
+            OPEN.decreaseKey(
+                temp, ASNode(edge.first, this->vxs_[edge.first].get_f()));
           }
           if (in_CLOSED) {
             CLOSED.erase(edge.first);
-            OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].f()));
+            OPEN.insert(ASNode(edge.first, this->vxs_[edge.first].get_f()));
           }
         }
       }
@@ -140,17 +142,24 @@ void AStar::set_path() {
   }
 }
 
+// Move along path
+size_t AStar::move() {
+  this->str_ = this->path_.front();
+  this->path_.pop_front();
+  return this->str_;
+}
+
 // Update map with SLAM pointcloud,
-void AStar::update(std::list<Point> slam_pntcloud) {
+void AStar::update_map(std::list<Point> slam_pntcloud) {
   std::list<size_t> updated = this->map_.slam_update(slam_pntcloud);
-  bool flag = false;
-  for (size_t ind : this->path_)
+  for (size_t ind : updated) {
+    this->vxs_[ind].set_h(INF);
+  }
+  for (size_t ind : this->path_) {
     if (!this->map().boxes(ind).is_free() || !this->map().boxes(ind).is_in()) {
-      flag = true;
-      break;
+      this->compute_shortest_path();
+      return;
     }
-  if (flag) {
-    this->compute_shortest_path();
   }
 }
 

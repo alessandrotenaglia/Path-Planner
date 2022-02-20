@@ -16,7 +16,8 @@
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
-#include "Map.h"
+#include "ExpMap.h"
+#include "NavMap.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
@@ -27,17 +28,28 @@ int main() {
   // Load config file
   cv::FileStorage fs;
   fs.open("../config/map_config.yaml", cv::FileStorage::READ);
-  // Map config
-  cv::FileNode map_cfg = fs["map"];
-  float map_xlen = (float)map_cfg["xlen"];
-  float map_ylen = (float)map_cfg["ylen"];
-  float map_zlen = (float)map_cfg["zlen"];
-  int map_nx = (int)map_cfg["nx"];
-  int map_ny = (int)map_cfg["ny"];
-  int map_nz = (int)map_cfg["nz"];
-  float map_xstep = map_xlen / (float)map_nx;
-  float map_ystep = map_ylen / (float)map_ny;
-  float map_zstep = map_zlen / (float)map_nz;
+  // Nav Map config
+  cv::FileNode nav_map_cfg = fs["nav_map"];
+  float nav_map_xlen = (float)nav_map_cfg["xlen"];
+  float nav_map_ylen = (float)nav_map_cfg["ylen"];
+  float nav_map_zlen = (float)nav_map_cfg["zlen"];
+  int nav_map_nx = (int)nav_map_cfg["nx"];
+  int nav_map_ny = (int)nav_map_cfg["ny"];
+  int nav_map_nz = (int)nav_map_cfg["nz"];
+  float nav_map_xstep = nav_map_xlen / (float)nav_map_nx;
+  float nav_map_ystep = nav_map_ylen / (float)nav_map_ny;
+  float nav_map_zstep = nav_map_zlen / (float)nav_map_nz;
+  // Exp Map config
+  cv::FileNode exp_map_cfg = fs["exp_map"];
+  float exp_map_xlen = (float)exp_map_cfg["xlen"];
+  float exp_map_ylen = (float)exp_map_cfg["ylen"];
+  float exp_map_zlen = (float)exp_map_cfg["zlen"];
+  int exp_map_nx = (int)exp_map_cfg["nx"];
+  int exp_map_ny = (int)exp_map_cfg["ny"];
+  int exp_map_nz = (int)exp_map_cfg["nz"];
+  float exp_map_xstep = exp_map_xlen / (float)exp_map_nx;
+  float exp_map_ystep = exp_map_ylen / (float)exp_map_ny;
+  float exp_map_zstep = exp_map_zlen / (float)exp_map_nz;
   // Drone config
   cv::FileNode drone_cfg = fs["drone"];
   float drone_radius = (float)drone_cfg["radius"];
@@ -54,11 +66,17 @@ int main() {
   double window_xstart = (double)window_cfg["xstart"];
   double window_ystart = (double)window_cfg["ystart"];
 
-  std::list<nav::Point> fix_pntcloud;
+  std::list<nav::Point> nav_fix_pntcloud;
   {
-    std::ifstream ifs("../data/fix_pntcloud.dat");
+    std::ifstream ifs("../data/nav_fix_pntcloud.dat");
     boost::archive::binary_iarchive ia(ifs);
-    ia >> fix_pntcloud;
+    ia >> nav_fix_pntcloud;
+  }
+  std::list<nav::Point> exp_fix_pntcloud;
+  {
+    std::ifstream ifs("../data/exp_fix_pntcloud.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> exp_fix_pntcloud;
   }
   std::list<nav::Point> slam_pntcloud;
   {
@@ -66,26 +84,50 @@ int main() {
     boost::archive::binary_iarchive ia(ifs);
     ia >> slam_pntcloud;
   }
-  std::list<nav::Point> total_pntcloud;
-  {
-    std::ifstream ifs("../data/total_pntcloud.dat");
-    boost::archive::binary_iarchive ia(ifs);
-    ia >> total_pntcloud;
-  }
 
-  nav::Map map;
+  nav::NavMap nav_map;
   try {
-    map = nav::Map(map_xlen, map_ylen, map_zlen, map_nx, map_ny, map_nz,
-                   drone_radius, drone_height, fix_pntcloud);
+    nav_map = nav::NavMap(nav_map_xlen, nav_map_ylen, nav_map_zlen, nav_map_nx,
+                          nav_map_ny, nav_map_nz, drone_radius, drone_height,
+                          nav_fix_pntcloud);
   } catch (const char *msg) {
     std::cerr << msg << std::endl;
     exit(EXIT_FAILURE);
   }
-
   {
-    std::ofstream ofs("../data/map.dat");
+    std::ofstream ofs("../data/nav_map.dat");
     boost::archive::binary_oarchive oa(ofs);
-    oa << map;
+    oa << nav_map;
+  }
+
+  nav::ExpMap exp_map;
+  try {
+    exp_map = nav::ExpMap(exp_map_xlen, exp_map_ylen, exp_map_nx,
+                          exp_map_ny, drone_radius, exp_fix_pntcloud);
+  } catch (const char *msg) {
+    std::cerr << msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  {
+    std::ofstream ofs("../data/exp_map.dat");
+    boost::archive::binary_oarchive oa(ofs);
+    oa << exp_map;
+  }
+
+  nav::NavMap empty_map;
+  std::list<nav::Point> empty_pntcloud;
+  try {
+    empty_map = nav::NavMap(nav_map_xlen, nav_map_ylen, nav_map_zlen, nav_map_nx,
+                         nav_map_ny, nav_map_nz, drone_radius, drone_height,
+                         empty_pntcloud);
+  } catch (const char *msg) {
+    std::cerr << msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  {
+    std::ofstream ofs("../data/empty_map.dat");
+    boost::archive::binary_oarchive oa(ofs);
+    oa << empty_map;
   }
 
   return 0;

@@ -33,16 +33,16 @@ int main() {
   cv::FileStorage fs;
   fs.open("../config/map_config.yaml", cv::FileStorage::READ);
   // Map config
-  cv::FileNode map_cfg = fs["map"];
-  float map_xlen = (float)map_cfg["xlen"];
-  float map_ylen = (float)map_cfg["ylen"];
-  float map_zlen = (float)map_cfg["zlen"];
-  int map_nx = (int)map_cfg["nx"];
-  int map_ny = (int)map_cfg["ny"];
-  int map_nz = (int)map_cfg["nz"];
-  float map_xstep = map_xlen / (float)map_nx;
-  float map_ystep = map_ylen / (float)map_ny;
-  float map_zstep = map_zlen / (float)map_nz;
+  cv::FileNode nav_map_cfg = fs["nav_map"];
+  float nav_map_xlen = (float)nav_map_cfg["xlen"];
+  float nav_map_ylen = (float)nav_map_cfg["ylen"];
+  float nav_map_zlen = (float)nav_map_cfg["zlen"];
+  int nav_map_nx = (int)nav_map_cfg["nx"];
+  int nav_map_ny = (int)nav_map_cfg["ny"];
+  int nav_map_nz = (int)nav_map_cfg["nz"];
+  float nav_map_xstep = nav_map_xlen / (float)nav_map_nx;
+  float nav_map_ystep = nav_map_ylen / (float)nav_map_ny;
+  float nav_map_zstep = nav_map_zlen / (float)nav_map_nz;
   // Drone config
   cv::FileNode drone_cfg = fs["drone"];
   float drone_radius = (float)drone_cfg["radius"];
@@ -59,13 +59,18 @@ int main() {
   double window_xstart = (double)window_cfg["xstart"];
   double window_ystart = (double)window_cfg["ystart"];
 
-  nav::Map map;
+  nav::NavMap nav_map;
   {
-    std::ifstream ifs("../data/map.dat");
+    std::ifstream ifs("../data/nav_map.dat");
     boost::archive::binary_iarchive ia(ifs);
-    ia >> map;
+    ia >> nav_map;
   }
-  nav::AStar astar(map);
+  nav::NavMap empty_map;
+  {
+    std::ifstream ifs("../data/empty_map.dat");
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> empty_map;
+  }
   std::list<nav::Point> slam_pntcloud;
   {
     std::ifstream ifs("../data/slam_pntcloud.dat");
@@ -79,14 +84,15 @@ int main() {
     ia >> total_pntcloud;
   }
 
-  nav::Point trg_pnt(17.5, 4.5, 1.5);
-  nav::Point str_pnt(2.5, 2.5, 1.5);
+  nav::AStar astar(nav_map);
+  nav::Point str_pnt(17.5, 4.5, 1.5);
+  nav::Point trg_pnt(2.5, 2.5, 1.5);
 
   std::list<size_t> path_from;
   std::list<size_t> path_to;
   try {
-    astar.set_str(str_pnt);
-    astar.set_trg(trg_pnt);
+    astar.set_str(trg_pnt);
+    astar.set_trg(str_pnt);
     astar.compute_shortest_path();
     path_to = astar.path();
   } catch (const char *err_msg) {
@@ -94,12 +100,11 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  size_t curr_ind = astar.str(), next_ind;
+  size_t curr_ind, next_ind;
   nav::Point curr_pnt, next_pnt;
   double yaw;
-  size_t cnt = 0;
-  size_t fps = 50;
-  nav::Point p1, p2, p3, p4, p5, p6;
+  size_t cnt = 0, fps = 50;
+  nav::Point p1, p2, p3, p4;
   std::vector<nav::Point> bounds;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
@@ -157,7 +162,7 @@ int main() {
               pntcloud.push_back(pnt);
           }
           //
-          astar.update(pntcloud);
+          astar.update_map(pntcloud);
           path_to = astar.path();
         } catch (const char *err_msg) {
           std::cerr << err_msg << std::endl;
@@ -171,12 +176,12 @@ int main() {
 
     // Floor
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    gl::draw_xyplane(map_xlen, map_ylen);
+    gl::draw_xyplane(nav_map_xlen, nav_map_ylen);
 
     // Fixed points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &b : map.boxes()) {
+    for (const nav::NavBox &b : astar.map().boxes()) {
       for (const nav::Point &pnt : b.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -186,7 +191,7 @@ int main() {
     // SLAM points
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &b : astar.map().boxes()) {
+    for (const nav::NavBox &b : astar.map().boxes()) {
       for (const nav::Point &pnt : b.slam_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -194,12 +199,12 @@ int main() {
     glEnd();
 
     // Boxes
-    /*glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
-    for (const nav::Box &box : astar.map().boxes()) {
+    glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
+    for (const nav::NavBox &box : astar.map().boxes()) {
       if (!box.is_free())
-        gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), map_xstep,
-                     map_ystep, map_zstep);
-    }*/
+        gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), nav_map_xstep,
+                     nav_map_ystep, nav_map_zstep);
+    }
 
     //
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
@@ -208,19 +213,19 @@ int main() {
     // Path
     if (curr_ind != astar.trg()) {
       glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
-      nav::Box box = astar.map().boxes(curr_ind);
+      nav::NavBox box = astar.map().boxes(curr_ind);
       gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                         drone_radius, drone_height);
       glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
       for (size_t ind : path_to) {
-        nav::Box box = astar.map().boxes(ind);
+        nav::NavBox box = astar.map().boxes(ind);
         gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                           drone_radius, drone_height);
       }
     } else {
       glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
       for (size_t ind : path_from) {
-        nav::Box box = astar.map().boxes(ind);
+        nav::NavBox box = astar.map().boxes(ind);
         gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                           drone_radius, drone_height);
       }
@@ -230,7 +235,7 @@ int main() {
       if (curr_ind != astar.trg()) {
         try {
           path_from.push_back(curr_ind);
-          curr_ind = astar.next();
+          astar.move();
         } catch (const char *err_msg) {
           std::cerr << err_msg << std::endl;
           exit(EXIT_FAILURE);
