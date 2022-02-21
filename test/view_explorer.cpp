@@ -20,7 +20,7 @@
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
 #include "Drawer.h"
-#include "ExpMap.h"
+#include "Explorer.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
@@ -58,11 +58,11 @@ int main() {
   double window_xstart = (double)window_cfg["xstart"];
   double window_ystart = (double)window_cfg["ystart"];
 
-  nav::ExpMap exp_map;
+  nav::Explorer explorer;
   {
-    std::ifstream ifs("../data/exp_map.dat");
+    std::ifstream ifs("../data/explorer.dat");
     boost::archive::binary_iarchive ia(ifs);
-    ia >> exp_map;
+    ia >> explorer;
   }
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
@@ -103,7 +103,7 @@ int main() {
     // Points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::ExpBox &box : exp_map.boxes()) {
+    for (const nav::ExpBox &box : explorer.boxes()) {
       for (const nav::Point &pnt : box.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -120,7 +120,7 @@ int main() {
 
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
-    for (const nav::ExpBox &box : exp_map.boxes()) {
+    for (const nav::ExpBox &box : explorer.boxes()) {
       if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), exp_map_xstep,
                      exp_map_ystep, exp_map_zstep);
@@ -128,11 +128,11 @@ int main() {
 
     // Links
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::ExpBox &src : exp_map.boxes()) {
+    for (const nav::ExpBox &src : explorer.boxes()) {
       for (nav::WtEdge edge : src.edges()) {
         if (edge.second < 0.42)
           continue;
-        nav::ExpBox dest = exp_map.boxes(edge.first);
+        nav::ExpBox dest = explorer.boxes(edge.first);
         gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
                       dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }

@@ -16,7 +16,7 @@
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
-#include "ExpMap.h"
+#include "Explorer.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
@@ -27,17 +27,6 @@ int main() {
   // Load config file
   cv::FileStorage fs;
   fs.open("../config/map_config.yaml", cv::FileStorage::READ);
-  // Nav Map config
-  cv::FileNode nav_map_cfg = fs["nav_map"];
-  float nav_map_xlen = (float)nav_map_cfg["xlen"];
-  float nav_map_ylen = (float)nav_map_cfg["ylen"];
-  float nav_map_zlen = (float)nav_map_cfg["zlen"];
-  int nav_map_nx = (int)nav_map_cfg["nx"];
-  int nav_map_ny = (int)nav_map_cfg["ny"];
-  int nav_map_nz = (int)nav_map_cfg["nz"];
-  float nav_map_xstep = nav_map_xlen / (float)nav_map_nx;
-  float nav_map_ystep = nav_map_ylen / (float)nav_map_ny;
-  float nav_map_zstep = nav_map_zlen / (float)nav_map_nz;
   // Exp Map config
   cv::FileNode exp_map_cfg = fs["exp_map"];
   float exp_map_xlen = (float)exp_map_cfg["xlen"];
@@ -72,18 +61,18 @@ int main() {
     ia >> exp_fix_pntcloud;
   }
 
-  nav::ExpMap exp_map;
+  nav::Explorer explorer;
   try {
-    exp_map = nav::ExpMap(exp_map_xlen, exp_map_ylen, exp_map_nx, exp_map_ny,
-                          drone_radius, exp_fix_pntcloud);
+    explorer = nav::Explorer(exp_map_xlen, exp_map_ylen, exp_map_nx, exp_map_ny,
+                             drone_radius, exp_fix_pntcloud);
   } catch (const char *msg) {
     std::cerr << msg << std::endl;
     exit(EXIT_FAILURE);
   }
   {
-    std::ofstream ofs("../data/exp_map.dat");
+    std::ofstream ofs("../data/explorer.dat");
     boost::archive::binary_oarchive oa(ofs);
-    oa << exp_map;
+    oa << explorer;
   }
 
   return 0;

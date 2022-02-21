@@ -12,8 +12,8 @@ exp_map:
   xlen: 20
   ylen: 10
   zlen: 3
-  nx: 15
-  ny: 7
+  nx: 20
+  ny: 10
   nz: 1
 
 drone:

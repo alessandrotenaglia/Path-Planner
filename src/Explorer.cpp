@@ -1,14 +1,14 @@
 /**
- * @file ExpMap.cpp
- * @brief Source file for class ExpMap
- * @date 11 January 2022
+ * @file Explorer.cpp
+ * @brief Source file for class Explorer
+ * @date 20 February 2022
  * @author Alessandro Tenaglia
  */
 
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
-#include "ExpMap.h"
+#include "Explorer.h"
 
 /*---------------------------------------------------------------------------*/
 /*                             Methods Definition                            */
@@ -16,8 +16,8 @@
 namespace nav {
 
 // Initialize a map
-ExpMap::ExpMap(float xlen, float ylen, size_t nx, size_t ny, float radius,
-               std::list<Point> exp_fix_pntcloud)
+Explorer::Explorer(float xlen, float ylen, size_t nx, size_t ny, float radius,
+                   std::list<Point> exp_fix_pntcloud)
     : xlen_(xlen), ylen_(ylen), nx_(nx), ny_(ny), n_(nx * ny), radius_(radius),
       boxes_(n_) {
   // Compute step
@@ -82,7 +82,7 @@ ExpMap::ExpMap(float xlen, float ylen, size_t nx, size_t ny, float radius,
 }
 
 // Compute the index of the corresponding box
-size_t ExpMap::pnt_to_ind(const Point &pnt) {
+size_t Explorer::pnt_to_ind(const Point &pnt) {
   // Point idxs
   std::vector<size_t> idxs(2);
   idxs[0] = (int)floor(pnt.x() / xstep_);

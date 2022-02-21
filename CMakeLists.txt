@@ -27,7 +27,7 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 
 # Create a shared library with common source files.
 add_library(${PROJECT_NAME}_utils STATIC src/Drawer.cpp
-                                         src/ExpMap.cpp
+                                         src/Explorer.cpp
                                          src/Planner.cpp
                                          src/Point.cpp
                                          src/Util.cpp)

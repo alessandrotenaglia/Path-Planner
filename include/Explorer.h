@@ -1,12 +1,12 @@
 /**
- * @file ExpMap.h
- * @brief Header file for class ExpMap
- * @date 11 January 2022
+ * @file Explorer.h
+ * @brief Header file for class Explorer
+ * @date 20 February 2022
  * @author Alessandro Tenaglia
  */
 
-#ifndef EXPMAP_H
-#define EXPMAP_H
+#ifndef EXPLORER_H
+#define EXPLORER_H
 
 /*---------------------------------------------------------------------------*/
 /*                          Standard header includes                         */
@@ -82,7 +82,7 @@ public:
   const std::vector<WtEdge> &edges() const { return edges_; }
 };
 
-class ExpMap {
+class Explorer {
 private:
   float xlen_, ylen_;         // Map dimension
   size_t nx_, ny_, n_;        // Number of boxes
@@ -99,11 +99,11 @@ private:
 
 public:
   // Default constructor
-  ExpMap(){};
+  Explorer(){};
 
   // Initialize Explorator
-  ExpMap(float xlen, float ylen, size_t nx, size_t ny, float radius,
-         std::list<Point> exp_fix_pntcloud);
+  Explorer(float xlen, float ylen, size_t nx, size_t ny, float radius,
+           std::list<Point> exp_fix_pntcloud);
 
   // Get ind-th box
   const ExpBox &boxes(size_t ind) const { return boxes_[ind]; }
@@ -125,4 +125,4 @@ public:
 
 } // namespace nav
 
-#endif /* EXPMAP_H */
+#endif /* EXPLORER_H */

@@ -20,7 +20,7 @@
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
 #include "Drawer.h"
-#include "ExpMap.h"
+#include "Explorer.h"
 
 /*---------------------------------------------------------------------------*/
 /*                              Main Definition                             */
@@ -58,18 +58,18 @@ int main() {
   double window_xstart = (double)window_cfg["xstart"];
   double window_ystart = (double)window_cfg["ystart"];
 
-  nav::ExpMap exp_map;
+  nav::Explorer explorer;
   {
-    std::ifstream ifs("../data/exp_map.dat");
+    std::ifstream ifs("../data/explorer.dat");
     boost::archive::binary_iarchive ia(ifs);
-    ia >> exp_map;
+    ia >> explorer;
   }
 
   std::list<size_t> exp_path;
   nav::Point str_pnt(8.5, 8.5, 2.0);
-  size_t curr_ind = exp_map.pnt_to_ind(str_pnt);
+  size_t curr_ind = explorer.pnt_to_ind(str_pnt);
   exp_path.push_front(curr_ind);
-  exp_map.set_explored(curr_ind);
+  explorer.set_explored(curr_ind);
 
   size_t cnt = 0, fps = 50;
 
@@ -110,7 +110,7 @@ int main() {
 
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
-    for (const nav::ExpBox &box : exp_map.boxes()) {
+    for (const nav::ExpBox &box : explorer.boxes()) {
       if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), exp_map_xstep,
                      exp_map_ystep, drone_height);
@@ -118,9 +118,9 @@ int main() {
 
     // Links
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::ExpBox &src : exp_map.boxes()) {
+    for (const nav::ExpBox &src : explorer.boxes()) {
       for (nav::WtEdge edge : src.edges()) {
-        nav::ExpBox dest = exp_map.boxes(edge.first);
+        nav::ExpBox dest = explorer.boxes(edge.first);
         gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
                       dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }
@@ -128,12 +128,12 @@ int main() {
 
     // Path
     glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
-    gl::draw_box(exp_map.boxes(curr_ind).cnt().x(),
-                 exp_map.boxes(curr_ind).cnt().y(),
-                 exp_map.boxes(curr_ind).cnt().z(), exp_map_xstep,
+    gl::draw_box(explorer.boxes(curr_ind).cnt().x(),
+                 explorer.boxes(curr_ind).cnt().y(),
+                 explorer.boxes(curr_ind).cnt().z(), exp_map_xstep,
                  exp_map_ystep, drone_height);
     glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-    for (const nav::ExpBox &box : exp_map.boxes()) {
+    for (const nav::ExpBox &box : explorer.boxes()) {
       if (box.is_explored())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), exp_map_xstep,
                      exp_map_ystep, drone_height);
@@ -143,10 +143,10 @@ int main() {
       size_t min_score = -1;
       float min_dist = INF;
       size_t min_ind = -1;
-      for (nav::WtEdge edge : exp_map.boxes(curr_ind).edges()) {
-        if (exp_map.boxes(edge.first).is_explored())
+      for (nav::WtEdge edge : explorer.boxes(curr_ind).edges()) {
+        if (explorer.boxes(edge.first).is_explored())
           continue;
-        size_t score = exp_map.boxes(edge.first).f();
+        size_t score = explorer.boxes(edge.first).f();
         if (score < min_score) {
           min_score = score;
           min_dist = edge.second;
@@ -162,7 +162,7 @@ int main() {
       //
       if (min_score == -1) {
         for (size_t ind : exp_path) {
-          if (exp_map.boxes(ind).f()) {
+          if (explorer.boxes(ind).f()) {
             curr_ind = ind;
             break;
           }
@@ -171,7 +171,7 @@ int main() {
         //
         curr_ind = min_ind;
         exp_path.push_front(curr_ind);
-        exp_map.set_explored(curr_ind);
+        explorer.set_explored(curr_ind);
       }
     }
 
