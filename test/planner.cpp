@@ -183,7 +183,7 @@ int main() {
     // Fixed points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : planner.boxes()) {
+    for (const nav::NavBox &box : planner.boxes()) {
       for (const nav::Point &pnt : box.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -192,7 +192,7 @@ int main() {
     // SLAM points
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : planner.boxes()) {
+    for (const nav::NavBox &box : planner.boxes()) {
       for (const nav::Point &pnt : box.slam_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -201,7 +201,7 @@ int main() {
 
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
-    for (const nav::Box &box : planner.boxes()) {
+    for (const nav::NavBox &box : planner.boxes()) {
       if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), nav_map_xstep,
                      nav_map_ystep, nav_map_zstep);
@@ -214,19 +214,19 @@ int main() {
     // Path
     if (curr_ind != planner.trg()) {
       glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
-      nav::Box box = planner.boxes(curr_ind);
+      nav::NavBox box = planner.boxes(curr_ind);
       gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                         drone_radius, drone_height);
       glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
       for (size_t ind : path_to) {
-        nav::Box box = planner.boxes(ind);
+        nav::NavBox box = planner.boxes(ind);
         gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                           drone_radius, drone_height);
       }
     } else {
       glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
       for (size_t ind : path_from) {
-        nav::Box box = planner.boxes(ind);
+        nav::NavBox box = planner.boxes(ind);
         gl::draw_cylinder(box.cnt().x(), box.cnt().y(), box.cnt().z(),
                           drone_radius, drone_height);
       }

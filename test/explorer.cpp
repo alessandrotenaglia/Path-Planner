@@ -68,9 +68,11 @@ int main() {
   std::list<size_t> exp_path;
   nav::Point str_pnt(8.5, 8.5, 2.0);
   size_t curr_ind = explorer.pnt_to_ind(str_pnt);
-  exp_path.push_front(curr_ind);
-  explorer.set_explored(curr_ind);
-
+  size_t curr_dir = 0;
+  std::vector<size_t> path = explorer.generate_path(curr_ind, curr_dir);
+  size_t trg_ind = path.back();
+  std::vector<size_t> glb_path;
+  glb_path.push_back(curr_ind);
   size_t cnt = 0, fps = 50;
 
   pangolin::CreateWindowAndBind(window_name, window_width, window_height);
@@ -120,7 +122,7 @@ int main() {
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     for (const nav::ExpBox &src : explorer.boxes()) {
       for (nav::WtEdge edge : src.edges()) {
-        nav::ExpBox dest = explorer.boxes(edge.first);
+        nav::ExpBox dest = explorer.boxes(std::get<0>(edge));
         gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
                       dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }
@@ -133,45 +135,21 @@ int main() {
                  explorer.boxes(curr_ind).cnt().z(), exp_map_xstep,
                  exp_map_ystep, drone_height);
     glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-    for (const nav::ExpBox &box : explorer.boxes()) {
-      if (box.is_explored())
-        gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), exp_map_xstep,
-                     exp_map_ystep, drone_height);
+    for (size_t ind : glb_path) {
+      gl::draw_box(explorer.boxes(ind).cnt().x(), explorer.boxes(ind).cnt().y(),
+                   explorer.boxes(ind).cnt().z(), exp_map_xstep, exp_map_ystep,
+                   drone_height);
     }
 
     if ((cnt % fps) == 0) {
-      size_t min_score = -1;
-      float min_dist = INF;
-      size_t min_ind = -1;
-      for (nav::WtEdge edge : explorer.boxes(curr_ind).edges()) {
-        if (explorer.boxes(edge.first).is_explored())
-          continue;
-        size_t score = explorer.boxes(edge.first).f();
-        if (score < min_score) {
-          min_score = score;
-          min_dist = edge.second;
-          min_ind = edge.first;
-        } else if (score == min_score) {
-          if (edge.second < min_dist) {
-            min_score = score;
-            min_dist = edge.second;
-            min_ind = edge.first;
-          }
-        }
-      }
-      //
-      if (min_score == -1) {
-        for (size_t ind : exp_path) {
-          if (explorer.boxes(ind).f()) {
-            curr_ind = ind;
-            break;
-          }
-        }
+      if (curr_ind != trg_ind) {
+        curr_ind = path.front();
+        path.erase(path.begin());
+        glb_path.push_back(curr_ind);
       } else {
-        //
-        curr_ind = min_ind;
-        exp_path.push_front(curr_ind);
-        explorer.set_explored(curr_ind);
+        curr_dir = explorer.choose_dir(curr_ind, curr_dir);
+        path = explorer.generate_path(curr_ind, curr_dir);
+        trg_ind = path.back();
       }
     }
 

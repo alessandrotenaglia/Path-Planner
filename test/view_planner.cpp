@@ -103,7 +103,7 @@ int main() {
     // Fixed points
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : planner.boxes()) {
+    for (const nav::NavBox &box : planner.boxes()) {
       for (const nav::Point &pnt : box.fix_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -112,7 +112,7 @@ int main() {
     // SLAM points
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for (const nav::Box &box : planner.boxes()) {
+    for (const nav::NavBox &box : planner.boxes()) {
       for (const nav::Point &pnt : box.slam_pnts()) {
         glVertex3f(pnt.x(), pnt.y(), pnt.z());
       }
@@ -121,7 +121,7 @@ int main() {
 
     // Boxes
     glColor4f(0.2f, 0.2f, 0.2f, 0.1f);
-    for (const nav::Box &box : planner.boxes()) {
+    for (const nav::NavBox &box : planner.boxes()) {
       if (!box.is_free())
         gl::draw_box(box.cnt().x(), box.cnt().y(), box.cnt().z(), nav_map_xstep,
                      nav_map_ystep, nav_map_zstep);
@@ -129,11 +129,9 @@ int main() {
 
     // Links
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
-    for (const nav::Box &src : planner.boxes()) {
+    for (const nav::NavBox &src : planner.boxes()) {
       for (nav::WtEdge edge : src.edges()) {
-        if (edge.second < 0.42)
-          continue;
-        nav::Box dest = planner.boxes(edge.first);
+        nav::NavBox dest = planner.boxes(std::get<0>(edge));
         gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
                       dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }

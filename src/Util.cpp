@@ -15,49 +15,52 @@
 /*---------------------------------------------------------------------------*/
 namespace nav {
 
-// Convert three-dimensional indexes into a linear index according to the given
+// Convert bi-dimensional indexes into a linear index according to the given
 // size
 size_t sub_to_ind_xy(std::vector<size_t> &size, std::vector<size_t> &idxs) {
   // Number of linear indexes
   size_t n = size[0] * size[1];
   // Check if idxs are valid wrt size
-  if ((idxs[0] < 0 || idxs[0] >= size[0]) ||
-      (idxs[1] < 0 || idxs[1] >= size[1]))
+  if (idxs[0] >= size[0] || idxs[1] >= size[1])
     return n;
-  // Convert three-dimensional indexes to corresponding liner index
-  return idxs[1] + size[1] * idxs[0];
+  // Convert bi-dimensional indexes to corresponding liner index
+  return idxs[1] + (size[1] * idxs[0]);
 }
+
+// Convert three-dimensional indexes into a linear index according to the given
+// size
 size_t sub_to_ind(std::vector<size_t> &size, std::vector<size_t> &idxs) {
   // Number of linear indexes
   size_t n = size[0] * size[1] * size[2];
   // Check if idxs are valid wrt size
-  if ((idxs[0] < 0 || idxs[0] >= size[0]) ||
-      (idxs[1] < 0 || idxs[1] >= size[1]) ||
-      (idxs[2] < 0 || idxs[2] >= size[2]))
+  if (idxs[0] >= size[0] || idxs[1] >= size[1] || idxs[2] >= size[2])
     return n;
   // Convert three-dimensional indexes to corresponding liner index
-  return idxs[2] + size[2] * (idxs[1] + size[1] * idxs[0]);
+  return idxs[2] + (size[2] * (idxs[1] + size[1] * idxs[0]));
 }
 
-// Convert a linear index into three-dimensional indexes according to the given
+// Convert a linear index into bi-dimensional indexes according to the given
 // size
 std::vector<size_t> *ind_to_sub_xy(std::vector<size_t> &size, size_t ind) {
   // Number of linear indexes
   size_t n = size[0] * size[1];
   // Check if ind is valid wrt size
-  if (ind < 0 || ind >= n)
+  if (ind >= n)
     return NULL;
-  // Convert linear index to corresponding three-dimensional indexes
+  // Convert linear index to corresponding bi-dimensional indexes
   std::vector<size_t> *idxs = new std::vector<size_t>(2);
   idxs->at(1) = ind % size[1];
   idxs->at(0) = (ind - idxs->at(1)) / size[1];
   return idxs;
 }
+
+// Convert a linear index into three-dimensional indexes according to the given
+// size
 std::vector<size_t> *ind_to_sub(std::vector<size_t> &size, size_t ind) {
   // Number of linear indexes
   size_t n = size[0] * size[1] * size[2];
   // Check if ind is valid wrt size
-  if (ind < 0 || ind >= n)
+  if (ind >= n)
     return NULL;
   // Convert linear index to corresponding three-dimensional indexes
   std::vector<size_t> *idxs = new std::vector<size_t>(3);
@@ -66,6 +69,34 @@ std::vector<size_t> *ind_to_sub(std::vector<size_t> &size, size_t ind) {
   idxs->at(1) = temp % size[1];
   idxs->at(0) = (temp - idxs->at(1)) / size[1];
   return idxs;
+}
+
+// Given an index and a level find its neighbors on xy-plane
+std::vector<size_t> *find_neighs_xy(std::vector<size_t> &size, size_t ind,
+                                    int xy_level) {
+  // Number of linear indexes
+  size_t n = size[0] * size[1];
+  // Convert linear index to corresponding bi-dimensional indexes
+  std::vector<size_t> *idxs = nav::ind_to_sub_xy(size, ind);
+  if (idxs == NULL)
+    return NULL;
+  // Find neighbors
+  size_t neigh_ind;
+  std::vector<size_t> neigh_idxs(2);
+  std::vector<size_t> *neighbors = new std::vector<size_t>;
+  for (int i = -xy_level; i <= xy_level; i++) {
+    for (int j = -xy_level; j <= xy_level; j++) {
+      // Compute neighbor's three-dimensional indexes
+      neigh_idxs[0] = idxs->at(0) + i;
+      neigh_idxs[1] = idxs->at(1) + j;
+      // Convert to corresponding linear index
+      neigh_ind = nav::sub_to_ind_xy(size, neigh_idxs);
+      // If neighbor's index is valid append to the array
+      if (neigh_ind < n)
+        neighbors->push_back(neigh_ind);
+    }
+  }
+  return neighbors;
 }
 
 // Given an index and a level find its neighbors
@@ -100,22 +131,27 @@ std::vector<size_t> *find_neighs(std::vector<size_t> &size, size_t ind,
 }
 
 // Given a certain index find its links
-std::vector<size_t> *find_links_xy(std::vector<size_t> &size, size_t ind) {
+std::vector<std::pair<size_t, size_t>> *find_links_xy(std::vector<size_t> &size,
+                                                      size_t ind) {
   // Number of linear indexes
   size_t n = size[0] * size[1];
-  // Convert linear index to corresponding tree-dimensional indexes
-  std::vector<size_t> *idxs = nav::ind_to_sub_xy(size, ind);
+  // Convert linear index to corresponding bi-dimensional indexes
+  std::vector<size_t> *idxs = ind_to_sub_xy(size, ind);
   if (idxs == NULL)
     return NULL;
   // Find links
-  size_t link_ind;
-  std::vector<size_t> link_idxs(2);
-  std::vector<size_t> *links = new std::vector<size_t>;
+  size_t link_ind, link_dir;
+  std::vector<size_t> link_idxs(2), dir_size = {3, 3}, dir_idxs(2);
+  auto *links = new std::vector<std::pair<size_t, size_t>>;
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
       // Skip same index
       if (i == 0 && j == 0)
         continue;
+      //
+      dir_idxs[0] = i + 1;
+      dir_idxs[1] = j + 1;
+      link_dir = sub_to_ind_xy(dir_size, dir_idxs);
       // Compute neighbor's three-dimensional indexes
       link_idxs[0] = idxs->at(0) + i;
       link_idxs[1] = idxs->at(1) + j;
@@ -123,14 +159,15 @@ std::vector<size_t> *find_links_xy(std::vector<size_t> &size, size_t ind) {
       link_ind = nav::sub_to_ind_xy(size, link_idxs);
       // If neighbor's index is valid append to the array
       if (link_ind < n)
-        links->push_back(link_ind);
+        links->push_back(std::make_pair(link_ind, link_dir));
     }
   }
   return links;
 }
 
 // Given a certain index find its links
-std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind) {
+std::vector<std::pair<size_t, size_t>> *find_links(std::vector<size_t> &size,
+                                                   size_t ind) {
   // Number of linear indexes
   size_t n = size[0] * size[1] * size[2];
   // Convert linear index to corresponding tree-dimensional indexes
@@ -138,9 +175,9 @@ std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind) {
   if (idxs == NULL)
     return NULL;
   // Find links
-  size_t link_ind;
-  std::vector<size_t> link_idxs(3);
-  std::vector<size_t> *links = new std::vector<size_t>;
+  size_t link_ind, link_dir;
+  std::vector<size_t> link_idxs(3), dir_size = {3, 3, 3}, dir_idxs(3);
+  auto *links = new std::vector<std::pair<size_t, size_t>>;
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
       for (int k = -1; k <= 1; k++) {
@@ -153,6 +190,11 @@ std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind) {
         // Skip edges
         if ((i != 0 || j != 0) && k != 0)
           continue;
+        //
+        dir_idxs[0] = i + 1;
+        dir_idxs[1] = j + 1;
+        dir_idxs[2] = k + 1;
+        link_dir = sub_to_ind(dir_size, dir_idxs);
         // Compute neighbor's three-dimensional indexes
         link_idxs[0] = idxs->at(0) + i;
         link_idxs[1] = idxs->at(1) + j;
@@ -161,7 +203,7 @@ std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind) {
         link_ind = nav::sub_to_ind(size, link_idxs);
         // If neighbor's index is valid append to the array
         if (link_ind < n)
-          links->push_back(link_ind);
+          links->push_back(std::make_pair(link_ind, link_dir));
       }
     }
   }

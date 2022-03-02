@@ -18,7 +18,7 @@ namespace nav {
 // Initialize a map
 Planner::Planner(float xlen, float ylen, float zlen, size_t nx, size_t ny,
                  size_t nz, float radius, float height,
-                 std::list<Point> fix_pntcloud)
+                 std::list<Point> nav_fix_pntcloud)
     : xlen_(xlen), ylen_(ylen), zlen_(zlen), nx_(nx), ny_(ny), nz_(nz),
       n_(nx * ny * nz), radius_(radius), height_(height), boxes_(n_),
       updatable_(n_, true) {
@@ -65,7 +65,7 @@ Planner::Planner(float xlen, float ylen, float zlen, size_t nx, size_t ny,
     this->boxes_[ind].set_neighs(*neighs);
   }
   // Assign fixed points to the respective boxes
-  for (const Point &pnt : fix_pntcloud) {
+  for (const Point &pnt : nav_fix_pntcloud) {
     size_t ind = this->pnt_to_ind(pnt);
     if (ind < this->n_)
       this->boxes_[ind].add_fix_pnt(pnt);
@@ -90,7 +90,7 @@ Planner::Planner(float xlen, float ylen, float zlen, size_t nx, size_t ny,
     }
   }
   // Link boxes close to each other
-  std::vector<size_t> *links;
+  std::vector<std::pair<size_t, size_t>> *links;
   for (size_t ind = 0; ind < this->n_; ind++) {
     if (!this->boxes_[ind].is_free() || !this->boxes_[ind].is_in())
       continue;
@@ -99,10 +99,13 @@ Planner::Planner(float xlen, float ylen, float zlen, size_t nx, size_t ny,
     if (links == NULL)
       throw "find_links() on " + std::to_string(ind) + " failed!";
     // Set links
-    for (size_t link : *links) {
-      if (this->boxes_[link].is_free() && this->boxes_[link].is_in()) {
+    for (std::pair<size_t, size_t> link : *links) {
+      if (this->boxes_[link.first].is_free() &&
+          this->boxes_[link.first].is_in()) {
         this->boxes_[ind].add_edge(
-            link, this->boxes_[ind].cnt().dist(this->boxes_[link].cnt()));
+            link.first,
+            this->boxes_[ind].cnt().dist(this->boxes_[link.first].cnt()),
+            link.second);
       }
     }
   }
@@ -164,29 +167,33 @@ void Planner::search() {
     // Loop on edges
     for (WtEdge edge : this->boxes_[curr.ind()].edges()) {
       // Cost to reach the link passing through the current vertex
-      float g_score = nav::round(this->boxes_[curr.ind()].g() + edge.second);
+      float g_score =
+          nav::round(this->boxes_[curr.ind()].g() + std::get<1>(edge));
       // Check if the vertex is in the OPEN set
-      node<Node> *temp =
-          OPEN.find(Node(edge.first, this->boxes_[edge.first].get_f()));
+      node<Node> *temp = OPEN.find(
+          Node(std::get<0>(edge), this->boxes_[std::get<0>(edge)].get_f()));
       bool in_OPEN = (temp != NULL);
       // Check if the vertex is in the CLOSED set
-      bool in_CLOSED = (CLOSED.find(edge.first) != CLOSED.end());
+      bool in_CLOSED = (CLOSED.find(std::get<0>(edge)) != CLOSED.end());
       //
       if (!in_OPEN && !in_CLOSED) {
-        this->boxes_[edge.first].set_g(g_score);
-        this->boxes_[edge.first].set_pred(curr.ind());
-        OPEN.insert(Node(edge.first, this->boxes_[edge.first].get_f()));
+        this->boxes_[std::get<0>(edge)].set_g(g_score);
+        this->boxes_[std::get<0>(edge)].set_pred(curr.ind());
+        OPEN.insert(
+            Node(std::get<0>(edge), this->boxes_[std::get<0>(edge)].get_f()));
       } else {
-        if (g_score < this->boxes_[edge.first].g()) {
-          this->boxes_[edge.first].set_g(g_score);
-          this->boxes_[edge.first].set_pred(curr.ind());
+        if (g_score < this->boxes_[std::get<0>(edge)].g()) {
+          this->boxes_[std::get<0>(edge)].set_g(g_score);
+          this->boxes_[std::get<0>(edge)].set_pred(curr.ind());
           if (in_OPEN) {
-            OPEN.decreaseKey(
-                temp, Node(edge.first, this->boxes_[edge.first].get_f()));
+            OPEN.decreaseKey(temp,
+                             Node(std::get<0>(edge),
+                                  this->boxes_[std::get<0>(edge)].get_f()));
           }
           if (in_CLOSED) {
-            CLOSED.erase(edge.first);
-            OPEN.insert(Node(edge.first, this->boxes_[edge.first].get_f()));
+            CLOSED.erase(std::get<0>(edge));
+            OPEN.insert(Node(std::get<0>(edge),
+                             this->boxes_[std::get<0>(edge)].get_f()));
           }
         }
       }

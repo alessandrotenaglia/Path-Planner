@@ -132,7 +132,7 @@ int main() {
   nav_fix_obstacles.push_back(
       std::make_pair(nav::Point(14.8, 8.1, 0.7), nav::Point(15.7, 9.0, 2.0)));
   exp_fix_obstacles.push_back(
-      std::make_pair(nav::Point(11.0, 8.1, 0.0), nav::Point(15.7, 9.8, 3.0)));
+      std::make_pair(nav::Point(12.7, 8.1, 0.0), nav::Point(15.7, 9.8, 3.0)));
 
   nav_fix_obstacles.push_back(
       std::make_pair(nav::Point(13.5, 0.0, 0.0), nav::Point(15.9, 1.8, 0.7)));

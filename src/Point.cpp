@@ -59,7 +59,7 @@ void Point::rotate_xy(const Point &cnt, float theta) {
       nav::round(((sin(theta) * xtemp) + (cos(theta) * ytemp)) + cnt.y());
 }
 
-// Check if the point is inside a box
+// Check if the point is inside a polygon
 bool Point::is_inside_xy(std::vector<Point> &points) {
   bool res = false;
   for (size_t i = 0, j = points.size() - 1; i < points.size(); j = i++) {

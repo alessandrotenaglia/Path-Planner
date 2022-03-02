@@ -130,9 +130,7 @@ int main() {
     glColor4f(0.2f, 0.2f, 0.2f, 0.2f);
     for (const nav::ExpBox &src : explorer.boxes()) {
       for (nav::WtEdge edge : src.edges()) {
-        if (edge.second < 0.42)
-          continue;
-        nav::ExpBox dest = explorer.boxes(edge.first);
+        nav::ExpBox dest = explorer.boxes(std::get<0>(edge));
         gl::draw_link(src.cnt().x(), src.cnt().y(), src.cnt().z(),
                       dest.cnt().x(), dest.cnt().y(), dest.cnt().z());
       }

@@ -5,8 +5,8 @@
  * @author Alessandro Tenaglia
  */
 
-#ifndef PLANNER_H
-#define PLANNER_H
+#ifndef PLANNER_H_
+#define PLANNER_H_
 
 /*---------------------------------------------------------------------------*/
 /*                          Standard header includes                         */
@@ -30,7 +30,7 @@ private:
   size_t nx_, ny_, nz_, n_;     // Number of boxes
   float xstep_, ystep_, zstep_; // Steps length
   float radius_, height_;       // Drone dimensions
-  std::vector<Box> boxes_;      // Vector containing all boxes
+  std::vector<NavBox> boxes_;   // Vector containing all boxes
   std::vector<bool> updatable_; // Indexes that can be updated
   size_t str_;                  // Start box
   size_t trg_;                  // Target box
@@ -53,9 +53,9 @@ public:
           float radius, float height, std::list<Point> fix_pntcloud);
 
   // Get ind-th box
-  const Box &boxes(size_t ind) const { return boxes_[ind]; }
+  const NavBox &boxes(size_t ind) const { return boxes_[ind]; }
   // Get boxes
-  const std::vector<Box> &boxes() const { return boxes_; }
+  const std::vector<NavBox> &boxes() const { return boxes_; }
 
   // Set start box from point
   void set_str(const Point &str_pnt);
@@ -86,4 +86,4 @@ public:
 
 } // namespace nav
 
-#endif /* PLANNER_H */
+#endif /* PLANNER_H_ */

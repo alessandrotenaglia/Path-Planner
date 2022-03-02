@@ -5,8 +5,8 @@
  * @author Alessandro Tenaglia
  */
 
-#ifndef BOX_H
-#define BOX_H
+#ifndef BOX_H_
+#define BOX_H_
 
 /*---------------------------------------------------------------------------*/
 /*                          Standard header includes                         */
@@ -22,33 +22,26 @@
 /*---------------------------------------------------------------------------*/
 namespace nav {
 
-class Box {
-private:
+class ExpBox {
+protected:
   size_t ind_;                 // Linear index
   Point cnt_;                  // Center
   bool in_;                    // Flag inside/outside map
   bool free_;                  // Flag free/busy
-  std::list<Point> fix_pnts_;  // Fixed points
-  std::list<Point> slam_pnts_; // SLAM points
-  std::vector<size_t> neighs_; // Neighbors
   std::vector<WtEdge> edges_;  // Edges
-  float g_;
-  float h_;
-  size_t pred_;
+  std::vector<size_t> neighs_; // Neighbors
+  std::list<Point> fix_pnts_;  // Fixed points
 
   // Box serialization
   friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar &ind_ &cnt_ &in_ &free_ &fix_pnts_ &slam_pnts_ &neighs_ &edges_ &g_ &h_
-        &pred_;
+    ar &ind_ &cnt_ &in_ &free_ &edges_ &neighs_ &fix_pnts_;
   }
 
 public:
   // Default constructor
-  Box()
-      : ind_(-1), cnt_(), in_(false), free_(true), g_(INF), h_(INF), pred_(-1) {
-  }
+  ExpBox() : ind_(-1), cnt_(), in_(false), free_(true) {}
 
   // Set ind
   void set_ind(size_t ind) { ind_ = ind; }
@@ -72,10 +65,42 @@ public:
   // Get free
   const bool &is_free() const { return free_; }
 
+  // Add an edge
+  void add_edge(size_t dest, float wt, size_t dir) {
+    edges_.push_back(std::make_tuple(dest, wt, dir));
+  }
+  // Get edges
+  const std::vector<WtEdge> &edges() const { return edges_; }
+
+  // Set neighbors
+  void set_neighs(std::vector<size_t> &neighs) { neighs_ = neighs; }
+  // Get neighbors
+  const std::vector<size_t> &neighs() const { return neighs_; }
+
   // Add a fixed point inside the box
   void add_fix_pnt(const Point &pnt) { fix_pnts_.push_back(pnt); }
   // Get fixed points inside the box
   const std::list<Point> &fix_pnts() const { return fix_pnts_; }
+};
+
+class NavBox : public ExpBox {
+private:
+  std::list<Point> slam_pnts_; // SLAM points
+  float g_;
+  float h_;
+  size_t pred_;
+
+  // Box serialization
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &ind_ &cnt_ &in_ &free_ &edges_ &neighs_ &fix_pnts_ &slam_pnts_ &g_ &h_
+        &pred_;
+  }
+
+public:
+  // Default constructor
+  NavBox() : ExpBox(), g_(INF), h_(INF), pred_(-1) {}
 
   // Add a SLAM point inside the box
   void add_slam_pnt(const Point &pnt) { slam_pnts_.push_back(pnt); }
@@ -83,18 +108,6 @@ public:
   void rm_slam_pnts() { slam_pnts_.clear(); }
   // Get SLAM points inside the box
   const std::list<Point> &slam_pnts() const { return slam_pnts_; }
-
-  // Set neighbors
-  void set_neighs(std::vector<size_t> &neighs) { neighs_ = neighs; }
-  // Get neighbors
-  const std::vector<size_t> &neighs() const { return neighs_; }
-
-  // Add an edge
-  void add_edge(size_t dest, float wt) {
-    edges_.push_back(std::make_pair(dest, wt));
-  }
-  // Get edges
-  const std::vector<WtEdge> &edges() const { return edges_; }
 
   // Set g value
   void set_g(float g) { g_ = g; }
@@ -142,7 +155,7 @@ public:
   // Operator ==
   bool operator==(const Node &rhs) const { return (ind_ == rhs.ind()); }
 
-  // Convert a Node in string form
+  // Convert a node in string form
   friend std::ostream &operator<<(std::ostream &os, const Node &vx) {
     os << "[ind: " << vx.ind() << "; f: " << vx.f() << "]";
     return os;
@@ -151,4 +164,4 @@ public:
 
 } // namespace nav
 
-#endif /* BOX_H */
+#endif /* BOX_H_ */

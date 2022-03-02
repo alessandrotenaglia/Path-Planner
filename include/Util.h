@@ -24,7 +24,7 @@
 /*---------------------------------------------------------------------------*/
 namespace nav {
 
-typedef std::pair<size_t, float> WtEdge;
+typedef std::tuple<size_t, float, size_t> WtEdge;
 
 #define INF 1000000000.0f
 
@@ -39,12 +39,16 @@ std::vector<size_t> *ind_to_sub_xy(std::vector<size_t> &size, size_t ind);
 std::vector<size_t> *ind_to_sub(std::vector<size_t> &size, size_t ind);
 
 // Given an index and a level find its neighbors
+std::vector<size_t> *find_neighs_xy(std::vector<size_t> &size, size_t ind,
+                                    int xy_level);
 std::vector<size_t> *find_neighs(std::vector<size_t> &size, size_t ind,
                                  int xy_level, int z_level);
 
 // Given a certain index find its links
-std::vector<size_t> *find_links_xy(std::vector<size_t> &size, size_t ind);
-std::vector<size_t> *find_links(std::vector<size_t> &size, size_t ind);
+std::vector<std::pair<size_t, size_t>> *find_links_xy(std::vector<size_t> &size,
+                                                      size_t ind);
+std::vector<std::pair<size_t, size_t>> *find_links(std::vector<size_t> &size,
+                                                   size_t ind);
 
 // Round a float
 static inline __attribute__((always_inline)) float round(float val) {

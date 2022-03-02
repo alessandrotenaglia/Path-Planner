@@ -5,16 +5,16 @@
  * @author Alessandro Tenaglia
  */
 
-#ifndef POINT_H
-#define POINT_H
+#ifndef POINT_H_
+#define POINT_H_
 
 /*---------------------------------------------------------------------------*/
 /*                          Standard header includes                         */
 /*---------------------------------------------------------------------------*/
-#include <boost/serialization/set.hpp>
 #include <boost/serialization/list.hpp>
-#include <boost/serialization/vector.hpp>
+#include <boost/serialization/set.hpp>
 #include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -22,6 +22,7 @@
 /*---------------------------------------------------------------------------*/
 /*                          Project header includes                          */
 /*---------------------------------------------------------------------------*/
+#include "serialize_tuple.h"
 #include "Util.h"
 
 /*---------------------------------------------------------------------------*/
@@ -85,7 +86,7 @@ public:
   // Rotate point of theta on xy-axis
   void rotate_xy(const Point &cnt, float theta);
 
-  // Check if the point is inside a box
+  // Check if the point is inside a polygon
   bool is_inside_xy(std::vector<Point> &points);
 
   // Check if two points are equals
@@ -97,4 +98,4 @@ public:
 
 } // namespace nav
 
-#endif /* POINT_H */
+#endif /* POINT_H_ */
